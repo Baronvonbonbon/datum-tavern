@@ -21,7 +21,7 @@ contract TavernBetting {
         address   winner;     // address(this) = house won
     }
 
-    uint256 public constant MAX_BET      = 1_000 * 10 ** 10; // 1 000 PAS in planck
+    uint256 public constant MAX_BET      = 1_000 ether; // 1 000 PAS (18-decimal wei, pallet-revive EVM scale)
     uint256 public constant JOIN_TIMEOUT = 30 minutes;
 
     Game[] private _games;

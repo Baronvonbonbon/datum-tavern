@@ -600,3 +600,34 @@ body {
 .hint         { font-size: 9px; color: var(--col-text-dim); }
 .loading-text { font-size: 9px; color: var(--col-text-dim); animation: blink 1s step-start infinite; }
 @keyframes blink { 50% { opacity: 0; } }
+
+/* ── Earnings purse (wallet bar) ─────────────────────────────────────────────── */
+.purse {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--col-wood);
+  border: 1px solid var(--col-gold);
+  border-radius: 4px;
+}
+.purse__icon   { font-size: 12px; }
+.purse__amount { color: var(--col-gold); font-size: 8px; }
+.purse__withdraw { font-size: 7px; padding: 3px 6px; }
+.purse__status   { color: var(--col-text-dim); font-size: 7px; max-width: 160px; }
+
+/* ── Town Crier earn-while-idle meter ────────────────────────────────────────── */
+.merchant-stall__earn {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed var(--col-amber);
+  border-radius: 4px;
+}
+.merchant-stall__imp        { color: var(--col-parchment); font-size: 8px; }
+.merchant-stall__earn-status{ color: var(--col-gold); font-size: 8px; }
+.merchant-stall__headline   { color: var(--col-gold); margin: 8px 0 4px; }
+.merchant-stall__body       { color: var(--col-text); font-size: 9px; line-height: 1.6; }

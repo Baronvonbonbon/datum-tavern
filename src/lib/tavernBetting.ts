@@ -1,4 +1,4 @@
-import { Contract, Signer } from "ethers";
+import { Contract, Signer, parseEther } from "ethers";
 import ABI from "../../abis/TavernBetting.json";
 import { ADDRESSES } from "./addresses";
 
@@ -23,7 +23,10 @@ function getContract(signer: Signer) {
 }
 
 export const MAX_BET_PAS = 1000;
-export const PLANCK_PER_PAS = 10n ** 10n;
+// Paseo's pallet-revive EVM uses 18-decimal wei (parseEther), not 10^10 planck.
+function pasToWei(pas: number): bigint {
+  return parseEther(String(pas));
+}
 
 /** Place a vs-house bet. Returns immediately after resolution. */
 export async function betVsHouse(
@@ -32,7 +35,7 @@ export async function betVsHouse(
   pasBet:   number,
 ): Promise<GameResult> {
   if (pasBet <= 0 || pasBet > MAX_BET_PAS) throw new Error("Bet out of range");
-  const value = BigInt(pasBet) * PLANCK_PER_PAS;
+  const value = pasToWei(pasBet);
   const c = getContract(signer);
   const tx = await c.createGame(gameType, true, { value });
   const receipt = await tx.wait();
@@ -57,7 +60,7 @@ export async function openP2PGame(
   gameType: GameType,
   pasBet:   number,
 ): Promise<bigint> {
-  const value = BigInt(pasBet) * PLANCK_PER_PAS;
+  const value = pasToWei(pasBet);
   const c = getContract(signer);
   const tx = await c.createGame(gameType, false, { value });
   const receipt = await tx.wait();

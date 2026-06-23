@@ -1,16 +1,27 @@
 /**
- * MerchantStall — right-wall hotspot.
- * Dedicated sponsored content crier. Always shows Datum campaign creatives.
- * Cycles through all active ads for this publisher.
+ * MerchantStall — right-wall hotspot ("The Town Crier").
+ *
+ * Dedicated sponsored-content surface AND the primary "earn while idle" loop:
+ * while a creative is on screen, impressions accrue; the patron collects them
+ * as a Datum view-claim (one MetaMask signature → native PAS revenue share).
+ * Clicking the call-to-action also files a (higher-value) click-claim.
  */
 
 import { useState, useEffect } from "react";
+import { formatEther } from "ethers";
 import { fetchTavernAds, DatumAd } from "../lib/datumContracts";
+import { useEarningsContext } from "../hooks/earningsContext";
+import { ACTION_TYPE } from "../lib/addresses";
+
+const ACCRUE_EVERY_MS = 4000; // one impression every few seconds while viewing
+const MAX_ACCRUED = 50;       // cap before the patron must collect
 
 export function MerchantStall() {
   const [ads,     setAds]     = useState<DatumAd[]>([]);
   const [idx,     setIdx]     = useState(0);
   const [loading, setLoading] = useState(true);
+  const [impressions, setImpressions] = useState(0);
+  const earnings = useEarningsContext();
 
   useEffect(() => {
     fetchTavernAds()
@@ -21,8 +32,30 @@ export function MerchantStall() {
 
   const current = ads[idx] ?? null;
 
+  // Reset the impression counter when the featured campaign changes.
+  useEffect(() => { setImpressions(0); }, [idx]);
+
+  // Accrue impressions while a creative is on screen and a wallet is connected.
+  const canEarn = !!earnings && !!current;
+  useEffect(() => {
+    if (!canEarn) return;
+    const t = setInterval(() => {
+      setImpressions((n) => Math.min(MAX_ACCRUED, n + 1));
+    }, ACCRUE_EVERY_MS);
+    return () => clearInterval(t);
+  }, [canEarn, idx]);
+
   const next = () => setIdx(i => (i + 1) % Math.max(1, ads.length));
   const prev = () => setIdx(i => (i - 1 + Math.max(1, ads.length)) % Math.max(1, ads.length));
+
+  const collectViews = async () => {
+    if (!earnings || !current || impressions <= 0) return;
+    const res = await earnings.claim(current.campaignId, ACTION_TYPE.VIEW, BigInt(impressions));
+    if (res.ok) setImpressions(0);
+  };
+
+  // Rough "worth" of the accrued impressions: viewBid is per-1000 (CPM).
+  const viewWorthWei = current ? (current.viewBidWei * BigInt(impressions)) / 1000n : 0n;
 
   return (
     <div className="modal merchant-stall">
@@ -56,6 +89,26 @@ export function MerchantStall() {
             <a className="btn btn--primary" href={current.ctaUrl} target="_blank" rel="noopener noreferrer">
               {current.cta}
             </a>
+          )}
+
+          {/* ── earn-while-idle meter ── */}
+          {earnings ? (
+            <div className="merchant-stall__earn">
+              <span className="merchant-stall__imp">
+                👁 {impressions} impression{impressions === 1 ? "" : "s"} watched
+                {impressions > 0 && ` · ~${Number(formatEther(viewWorthWei)).toFixed(5)} PAS`}
+              </span>
+              <button
+                className="btn btn--secondary"
+                onClick={collectViews}
+                disabled={earnings.busy || impressions <= 0}
+              >
+                {earnings.busy ? "Collecting…" : "Collect impressions"}
+              </button>
+              {earnings.status && <span className="merchant-stall__earn-status">{earnings.status}</span>}
+            </div>
+          ) : (
+            <p className="hint">Connect a wallet to earn a share for watching.</p>
           )}
 
           <div className="merchant-stall__meta">

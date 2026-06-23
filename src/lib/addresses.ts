@@ -28,6 +28,7 @@ export const ADDRESSES = {
   datumGovernanceRouter: "0xCcaE1A080D24e62962d7e830Db61709C1967F6D0", // adminActivateCampaign (Phase 0 gov)
   datumBudgetLedger:     "0xCA9411af5a30729D59eE2F46056021Ac9a2415a8",
   datumPaymentVault:     "0xe511B0E7e114671e452dA34fAeb1081bB5a413F8",
+  datumPowEngine:        "0xE4E30FfF57f65645edE7b0F91ACca7A939EF0104", // per-impression PoW (enforced live)
 
   // ── Demo actors (filled by seed-tavern.ts, Phase 1) ───────────────────────
   // The tavern's publisher address, registered in DatumPublishers.
@@ -49,4 +50,16 @@ export const ACTION_TYPE = {
   VIEW:   0, // idle impression
   CLICK:  1, // interacted with a creative
   ACTION: 2, // completed a sponsored in-game action
+} as const;
+
+// Datum relay endpoint (user-signed claims → POST /relay/submit). The relay
+// co-signs the publisher side (Diana) and submits DatumRelay.settleClaimsFor.
+export const RELAY_URL = "https://relay.javcon.io";
+
+// Per-event clearing rates (wei). VIEW is read on-chain (getCampaignViewBid);
+// CLICK/ACTION have no on-chain getter, so these MUST match the rates seeded by
+// scripts/seed-tavern.mjs (claim.rateWei must be <= the campaign's pot rate).
+export const CLAIM_RATE_WEI = {
+  CLICK:  10_000_000_000_000_000n, // 0.01 PAS / click
+  ACTION: 50_000_000_000_000_000n, // 0.05 PAS / action
 } as const;

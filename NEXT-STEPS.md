@@ -129,18 +129,39 @@ modeled on the proven `alpha-core/scripts/reseed-demo.mjs` Paseo patterns
 
 ---
 
-## Phase 2 — The earn loop (the payoff)
+## Phase 2 — The earn loop ✅ VIEW LOOP BUILT
 
-5. `src/lib/datumClaims.ts` — build a view/click/action `Claim`, get the user's
-   EIP-712 signature via MetaMask, hand to the relay path, parse `ClaimSettled`.
-6. Wire the mechanic:
-   - **Idle views** accrue while ad zones are open (rate-limited, batched).
-   - **Clicking a Town Crier creative / a Barkeep "tell me more"** → click claim.
-   - **A sponsored game action** (e.g. "Smithy-sponsored dice round") → action claim.
-7. Live **"your earnings"** readout from `DatumPaymentVault.userBalance` + a
-   `withdrawUser()` button.
-8. Deploy `TavernBoard` + `TavernBetting` to Paseo; fill their addresses; fund
-   the betting house from Alice.
+The "earn while idle" loop is wired end-to-end for **view** claims (the core
+mechanic). Click/action are gated by infra we haven't seeded (see below).
+
+- `src/lib/datumClaims.ts` — builds a view claim, reads `lastNonce` +
+  `lastClaimHash`, **mines the per-impression PoW** bound to the exact
+  on-chain-derived claim hash (PoW is **enforced live** — verified the encoding
+  matches the canonical reference and mining a real target takes ~0.4s), gets
+  the user's EIP-712 `ClaimBatch`-range signature over the **DatumRelay** domain
+  via MetaMask, and POSTs to `https://relay.javcon.io/relay/submit`. The relay
+  co-signs the publisher side (Diana) and submits `settleClaimsFor`.
+- `src/hooks/useEarnings.ts` + `earningsContext.tsx` + `EarningsPurse.tsx` —
+  live `PaymentVault.userBalance` readout, claim driver (signs → waits for
+  credit), and `withdrawUser()` button. Purse lives in the WalletBar.
+- **Town Crier** (`MerchantStall`) accrues impressions while a creative is on
+  screen; "Collect impressions" files one view claim → balance rises → "Collect"
+  withdraws to wallet.
+- **Denomination fix:** `TavernBetting.sol` (`1_000 ether`), `deploy.ts`
+  (`parseEther`), `tavernBetting.ts` (`parseEther`) now use 18-decimal wei.
+
+### Deferred (need extra infra — Phase 2.1)
+- **Click claims** (`actionType 1`) need a ClickRegistry session, and
+  `recordClick` is **relay-gated** — requires a relay click endpoint, not a
+  user self-call. CTA is a plain link for now.
+- **Action claims** (`actionType 2`) need the pot's `actionVerifier` to sign an
+  `actionSig`; the seed sets `actionVerifier = address(0)`. To enable sponsored
+  game actions, deploy/configure an action verifier and have it co-sign.
+- The seed funds view+click+action pots; only the view pot is currently earnable.
+
+### Still operator-run
+8. Deploy `TavernBoard` + `TavernBetting` to Paseo (`npm run deploy`), fill their
+   addresses in `src/lib/addresses.ts`, fund the house from Alice. (Needs keys.)
 
 ---
 

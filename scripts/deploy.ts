@@ -15,12 +15,9 @@ import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
 
-const PLANCK_PER_PAS = 10n ** 10n;
-const DENOM_ROUND    = 10n ** 6n; // Paseo denomination rounding requirement
-
-function roundPlanck(raw: bigint): bigint {
-  return (raw / DENOM_ROUND) * DENOM_ROUND;
-}
+// Paseo's pallet-revive EVM presents native balances in 18-decimal wei (the
+// scale MetaMask + eth-rpc use), so amounts use parseEther/formatEther — NOT
+// 10^10 planck. parseEther values are clean 10^6 multiples (denomination-safe).
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -46,8 +43,8 @@ async function main() {
   console.log("TavernBetting:", bettingAddr);
 
   // ── Fund the house pot ────────────────────────────────────────────────────
-  const housePas  = BigInt(process.env.HOUSE_FUND_PAS ?? "100");
-  const houseFund = roundPlanck(housePas * PLANCK_PER_PAS);
+  const housePas  = process.env.HOUSE_FUND_PAS ?? "100";
+  const houseFund = ethers.parseEther(housePas);
   console.log(`\nFunding house pot with ${housePas} PAS...`);
   const fundTx = await deployer.sendTransaction({
     to:    bettingAddr,
