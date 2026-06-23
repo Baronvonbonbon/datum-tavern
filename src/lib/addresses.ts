@@ -22,8 +22,10 @@ export const ADDRESSES = {
   datumCampaignCreative: "0xd5FB31A85a02a91980b65B400db37867Ef984338",
   datumPublishers:       "0x86776018850b61c1e9202d73F031993818c33173",
   datumSettlement:       "0x7832E3c00643992d0811dd866d543A84Cff7Eb9f",
+  datumDualSig:          "0x1341b8613d1ce62f9F542fd98e08ceDf83Cb24E9", // DatumDualSigSettlement (relay/earn path, Phase 2)
   datumClaimValidator:   "0x3bCb2D6fE89c8526577Ada23904495F4327b9153",
   datumRelay:            "0x7Db03df460B3A8E3079ff87014614898fECDbC5b",
+  datumGovernanceRouter: "0xCcaE1A080D24e62962d7e830Db61709C1967F6D0", // adminActivateCampaign (Phase 0 gov)
   datumBudgetLedger:     "0xCA9411af5a30729D59eE2F46056021Ac9a2415a8",
   datumPaymentVault:     "0xe511B0E7e114671e452dA34fAeb1081bB5a413F8",
 

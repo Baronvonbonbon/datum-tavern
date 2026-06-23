@@ -86,24 +86,46 @@ addresses are seeded (Phase 1).
 
 ---
 
-## Phase 1 — Seed the demo on-chain (fund from Alice)
+## Phase 1 — Seed the demo on-chain (fund from Alice) ✅ SCRIPT BUILT
 
-Create real, fantasy-flavored data the demo reads. Fund everything from the
-Datum **Alice** deployer account.
+`scripts/seed-tavern.mjs` (run with `npm run seed`) does the whole flow,
+modeled on the proven `alpha-core/scripts/reseed-demo.mjs` Paseo patterns
+(raw provider + nonce-poll for the receipt bug):
 
-1. **Register the tavern publisher** in `DatumPublishers` (set `relaySigner`,
-   profile). Write its address into `ADDRESSES.tavernPublisher`.
-2. **Create 3–4 themed campaigns** targeting that publisher. Suggested flavor:
-   - _Ironforge Smithy_ — "Blades that bite back. 10% off enchantments this moon."
-   - _Eastvale Caravan Co._ — "Safe passage to the capital. Guards included."
-   - _Madame Hex's Apothecary_ — "Potions, philtres, and the occasional curse."
-   - _The Adventurers' Guild_ — "Now recruiting. Bring your own sword."
-3. Upload each creative JSON (+ pixel-art image) to IPFS, `setMetadata(id, hash)`,
-   fund budgets, allowlist advertisers, activate.
-4. Script it: `scripts/seed-tavern.ts` (mirror the alpha-core setup scripts; read
-   the Alice key from `.env`).
+1. **Funds** the new tavern publisher + advertiser (Bob) from **Alice**.
+2. **Registers a new tavern publisher** (`registerPublisher(takeBps)`) and
+   **delegates its `relaySigner` → Diana** — the live relay holds Diana's key, so
+   the already-running relay can settle for the new publisher (reconciles "new
+   publisher" with "use existing relay signers").
+3. **Creates N fantasy-merchant campaigns** (advertiser = Bob, who is already
+   staked — `createCampaign` enforces advertiser stake), each funding **view +
+   click + action pots** (`actionType` 0/1/2), so budget is tied to all three
+   earning events. Merchants: Ironforge Smithy, Eastvale Caravan Co., Madame
+   Hex's Apothecary, The Adventurers' Guild, Gilded Tankard Brewery, Whispering
+   Wand Emporium.
+4. **Uploads** a themed SVG + creative JSON to the local IPFS (Kubo) node and
+   commits it via `DatumCampaignCreative.setMetadata` (CIDv0→bytes32; the
+   encoding is the exact inverse of `src/lib/ipfs.ts`, verified).
+5. **Activates** each campaign via `DatumGovernanceRouter.adminActivateCampaign`
+   (Phase 0 admin gov; Alice = owner). Writes `tavern-seed.json` and prints the
+   publisher address to paste into `ADDRESSES.tavernPublisher`.
 
-**You provide:** the funded Alice key in `.env`.
+### To run it (you provide)
+- `.env` with `ALICE_KEY` + `ADVERTISER_KEY` (the Datum Alice/Bob test keys),
+  funded on Paseo. Leave `TAVERN_PUBLISHER_KEY` blank on first run — the script
+  generates one and prints it to save for idempotent re-runs.
+- The **local Datum IPFS (Kubo) node running** (the script shells out to `ipfs add`).
+- After it finishes: paste the printed `tavernPublisher` into
+  `src/lib/addresses.ts` → the ad zones light up.
+
+### Known caveats (deferred)
+- `registerPublisher` does **not** stake the publisher. If Phase 2 settlement
+  rejects the tavern publisher as under-staked, add a `DatumPublisherStake` step.
+- The action pot (`actionType 2`) is funded, but claiming it in Phase 2 needs an
+  action proof (`actionSig`); start the earn loop with view (+click) claims.
+- **Denomination bug to fix in Phase 2:** `TavernBetting.sol`/`deploy.ts`/
+  `tavernBetting.ts` assume `10^10` planck, but Paseo's eth-rpc uses **18-decimal
+  wei** (`parseEther`). Bets will be 8 orders of magnitude too small until fixed.
 
 ---
 
