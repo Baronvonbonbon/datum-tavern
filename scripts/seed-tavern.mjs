@@ -1,7 +1,7 @@
 // seed-tavern.mjs — Phase 1: stand up the Datum data the tavern reads.
 //
 // Registers a NEW fantasy-tavern publisher, delegates its on-chain relaySigner
-// to the existing live relay key (Diana) so the running relay can settle for it,
+// to the live relay's cosigning EOA so the running relay can settle for it,
 // then deploys a set of fantasy-merchant campaigns (advertiser = Bob, the
 // established/staked advertiser whose key the relay also holds). Each campaign:
 //   - funds VIEW + CLICK + ACTION pots (budget tied to each event type)
@@ -21,7 +21,7 @@
 //   ALICE_KEY            owner/admin/funder private key (Datum Alice)
 //   ADVERTISER_KEY       advertiser private key (Datum Bob — already staked)
 //   TAVERN_PUBLISHER_KEY new tavern publisher EOA key (omit → one is generated)
-//   DIANA_ADDR           relaySigner delegate (default: live relay's Diana addr)
+//   RELAY_SIGNER_ADDR    relaySigner delegate (default: live relay's cosigning EOA)
 //   DATUM_ADDRESSES      path to deployed-addresses.json
 //   TESTNET_RPC          Paseo eth-rpc (default eth-rpc-testnet.polkadot.io)
 
@@ -42,7 +42,10 @@ loadDotEnv(resolve(ROOT, ".env"));
 const RPC = process.env.TESTNET_RPC || "https://eth-rpc-testnet.polkadot.io/";
 const ADDR_PATH = process.env.DATUM_ADDRESSES
   || resolve(ROOT, "../datum/alpha-core/deployed-addresses.json");
-const DIANA = process.env.DIANA_ADDR || "0xcA5668fB864Acab0aC7f4CFa73949174720b58D0";
+// The campaign relaySigner must equal the live relay's cosigning EOA (its
+// PUBLISHER_KEY address — query GET /relay/status → "publisher"). Claims are
+// rejected (E34) if the campaign snapshot relaySigner ≠ the relay's signer.
+const RELAY_SIGNER = process.env.RELAY_SIGNER_ADDR || process.env.DIANA_ADDR || "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197";
 // Action-verifier address for type-2 (sponsored-action) pots. Must equal the
 // address of the relay's ACTION_VERIFIER_KEY. address(0) → action pot is funded
 // but not claimable (no verifier to attest).
@@ -191,7 +194,7 @@ async function main() {
   console.log(`  campaigns=${A.campaigns}  creative=${A.campaignCreative}  publishers=${A.publishers}  router=${A.governanceRouter}`);
   console.log(`  advertiser Bob ${bob.address}`);
   console.log(`  tavern publisher ${tavern.address}${generatedKey ? "  (GENERATED — save the key below)" : ""}`);
-  console.log(`  relaySigner delegate → Diana ${DIANA}\n`);
+  console.log(`  relaySigner delegate → relay signer ${RELAY_SIGNER}\n`);
 
   if (!ipfsAvailable()) die("local `ipfs` (Kubo) CLI not found — needed to pin creatives to the gateway. Start the Datum IPFS node first.");
 
@@ -212,7 +215,7 @@ async function main() {
   // Bob needs budget for N campaigns + headroom for gas.
   await fund(bob.address, perCampaign * BigInt(N) + parseEther("5"), "advertiser Bob (budgets + gas)");
 
-  // ── [2] register tavern publisher + delegate relaySigner → Diana ──────────
+  // ── [2] register tavern publisher + delegate relaySigner → relay signer ───
   console.log("\n[2] registering tavern publisher…");
   const pub = await read(A.publishers, iPub, "getPublisher", [tavern.address]);
   if (pub[0].registered) {
@@ -222,12 +225,12 @@ async function main() {
     console.log(`    registered with take ${PUBLISHER_TAKE_BPS / 100}%`);
   }
   const curRelay = (await read(A.publishers, iPub, "relaySigner", [tavern.address]))[0];
-  if (curRelay.toLowerCase() === DIANA.toLowerCase()) {
-    console.log(`    relaySigner already → Diana`);
+  if (curRelay.toLowerCase() === RELAY_SIGNER.toLowerCase()) {
+    console.log(`    relaySigner already → relay signer`);
   } else {
-    await send(tavern, A.publishers, iPub, "setRelaySigner", [DIANA]);
+    await send(tavern, A.publishers, iPub, "setRelaySigner", [RELAY_SIGNER]);
     const now = (await read(A.publishers, iPub, "relaySigner", [tavern.address]))[0];
-    console.log(`    relaySigner → ${now}  ${now.toLowerCase() === DIANA.toLowerCase() ? "✓" : "✗ FAILED"}`);
+    console.log(`    relaySigner → ${now}  ${now.toLowerCase() === RELAY_SIGNER.toLowerCase() ? "✓" : "✗ FAILED"}`);
   }
 
   // ── [3] create + fund + describe + activate campaigns ─────────────────────
@@ -251,7 +254,7 @@ async function main() {
 
     const st = Number((await read(A.campaigns, iCamp, "getCampaignStatus", [cid]))[0]);
     const rs = (await read(A.campaigns, iCamp, "getCampaignRelaySigner", [cid]))[0];
-    const okRelay = rs.toLowerCase() === DIANA.toLowerCase();
+    const okRelay = rs.toLowerCase() === RELAY_SIGNER.toLowerCase();
     deployed.push({ cid, title: m.title, category: m.category, svgCid, metaCid, status: STATUS[st], relaySigner: rs });
     console.log(`    #${cid} ${m.title.padEnd(24)} ${STATUS[st].padEnd(7)} relaySigner=${rs.slice(0, 8)}${okRelay ? "✓" : "✗"}  meta=${metaCid.slice(0, 12)}`);
   }
@@ -259,7 +262,7 @@ async function main() {
   // ── manifest + next-step hints ────────────────────────────────────────────
   const manifest = {
     at: new Date().toISOString(), chainId: Number(net.chainId), gateway: IPFS_GATEWAY,
-    tavernPublisher: tavern.address, advertiser: bob.address, relaySigner: DIANA,
+    tavernPublisher: tavern.address, advertiser: bob.address, relaySigner: RELAY_SIGNER,
     campaigns: deployed,
   };
   writeFileSync(resolve(ROOT, "tavern-seed.json"), JSON.stringify(manifest, null, 2));
