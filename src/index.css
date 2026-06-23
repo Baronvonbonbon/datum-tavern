@@ -1,0 +1,602 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   DATUM TAVERN — Global Styles
+   Pixel-art / old-school fantasy aesthetic.
+   Font: Press Start 2P (Google Fonts import in index.html)
+   Palette: amber, dark brown, parchment, muted red
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Reset ─────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── Custom Properties ──────────────────────────────────────────────────────── */
+:root {
+  --col-bg:          #1a1008;
+  --col-wall:        #2c1a0a;
+  --col-floor:       #3d2410;
+  --col-wood:        #5c3317;
+  --col-amber:       #c8860a;
+  --col-gold:        #f0c040;
+  --col-parchment:   #e8d8a0;
+  --col-parch-dark:  #c8b870;
+  --col-red:         #8b2020;
+  --col-text:        #f0e0b0;
+  --col-text-dim:    #a08060;
+  --col-green:       #2a6032;
+  --col-border:      #6b4020;
+
+  --font-px: "Press Start 2P", monospace;
+  --font-serif: Georgia, "Times New Roman", serif;
+
+  --z-scene:   0;
+  --z-hotspot: 10;
+  --z-overlay: 100;
+  --z-modal:   110;
+  --z-walletbar: 200;
+}
+
+/* ── Base ───────────────────────────────────────────────────────────────────── */
+html, body { height: 100%; overflow: hidden; background: var(--col-bg); }
+
+body {
+  font-family: var(--font-px);
+  font-size:   10px;
+  color:       var(--col-text);
+  image-rendering: pixelated;
+}
+
+/* ── App shell ──────────────────────────────────────────────────────────────── */
+.app {
+  display:        flex;
+  flex-direction: column;
+  height:         100vh;
+  overflow:       hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAVERN SCENE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.tavern-scene {
+  position: relative;
+  flex:     1 1 auto;
+  overflow: hidden;
+}
+
+/* ── Background ─────────────────────────────────────────────────────────────── */
+.tavern-bg {
+  position: absolute;
+  inset:    0;
+  z-index:  var(--z-scene);
+}
+
+.tavern-bg__wall {
+  position:   absolute;
+  inset:      0 0 30% 0;
+  background: var(--col-wall);
+  border-bottom: 4px solid var(--col-wood);
+}
+
+.tavern-bg__floor {
+  position:   absolute;
+  inset:      70% 0 0 0;
+  background: var(--col-floor);
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 48px,
+    rgba(0,0,0,.3) 48px 52px
+  );
+}
+
+.tavern-bg__beams {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--col-wood) 0 80px,
+    var(--col-bg)   80px 88px
+  );
+}
+
+/* Candles — pure CSS flame */
+.tavern-bg__candle {
+  position:   absolute;
+  top:        12%;
+  width:      12px;
+  height:     32px;
+  background: var(--col-parchment);
+  border-radius: 2px 2px 0 0;
+}
+.tavern-bg__candle--left  { left:  8%; }
+.tavern-bg__candle--right { right: 8%; }
+
+.tavern-bg__candle::after {
+  content:  "";
+  position: absolute;
+  top:      -14px;
+  left:     50%;
+  transform: translateX(-50%);
+  width:    8px;
+  height:   14px;
+  background: radial-gradient(ellipse at 50% 80%, #ff8800 0%, #ff4400 40%, transparent 80%);
+  border-radius: 50% 50% 20% 20%;
+  animation: flicker 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes flicker {
+  0%   { opacity: .9; transform: translateX(-50%) scaleX(1);    }
+  100% { opacity: .7; transform: translateX(-48%) scaleX(.85);  }
+}
+
+/* Fireplace */
+.tavern-bg__fire {
+  position:   absolute;
+  bottom:     30%;
+  left:       50%;
+  transform:  translateX(-50%);
+  width:      80px;
+  height:     40px;
+  background: radial-gradient(ellipse at 50% 100%, #ff6600 0%, #cc2200 60%, transparent 100%);
+  animation:  flicker 0.8s ease-in-out infinite alternate;
+  border-radius: 40% 40% 0 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOTSPOTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.hotspot {
+  position:      absolute;
+  z-index:       var(--z-hotspot);
+  background:    rgba(0,0,0,.35);
+  border:        2px solid var(--col-amber);
+  color:         var(--col-gold);
+  font-family:   var(--font-px);
+  font-size:     8px;
+  cursor:        pointer;
+  padding:       8px 12px;
+  border-radius: 4px;
+  transition:    background 0.15s, border-color 0.15s;
+  text-shadow:   0 1px 2px #000;
+}
+.hotspot:hover {
+  background:   rgba(200,134,10,.25);
+  border-color: var(--col-gold);
+}
+
+/* Zone positions (adjust to taste) */
+.hotspot--board    { top: 20%; left:  5%;  width: 200px; height: 130px; }
+.hotspot--barkeep  { top: 15%; left: 38%;  width: 200px; height: 120px; }
+.hotspot--merchant { top: 20%; right:  5%; width: 200px; height: 130px; }
+.hotspot--games    { bottom: 32%; left: 10%; width: 180px; height: 100px; }
+
+.hotspot__label {
+  display:     block;
+  text-align:  center;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODAL OVERLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+.modal-overlay {
+  position:    fixed;
+  inset:       0;
+  z-index:     var(--z-overlay);
+  background:  rgba(0,0,0,.7);
+  display:     flex;
+  align-items: center;
+  justify-content: center;
+  padding:     16px;
+}
+
+.modal-wrap {
+  position:    relative;
+  background:  var(--col-wall);
+  border:      3px solid var(--col-amber);
+  border-radius: 6px;
+  padding:     24px;
+  max-width:   640px;
+  width:       100%;
+  max-height:  80vh;
+  overflow-y:  auto;
+  z-index:     var(--z-modal);
+  box-shadow:  0 0 40px rgba(200,134,10,.3);
+}
+
+.modal-close {
+  position:   absolute;
+  top:        8px;
+  right:      12px;
+  background: transparent;
+  border:     none;
+  color:      var(--col-text-dim);
+  font-size:  16px;
+  cursor:     pointer;
+}
+.modal-close:hover { color: var(--col-text); }
+
+.modal__title {
+  font-size:     13px;
+  color:         var(--col-gold);
+  margin-bottom: 16px;
+  text-shadow:   0 1px 4px #000;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUEST BOARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+.quest-board__notices {
+  display:        flex;
+  flex-direction: column;
+  gap:            10px;
+  margin-bottom:  16px;
+}
+
+.notice {
+  background:    var(--col-parchment);
+  color:         #3a2010;
+  border:        2px solid var(--col-parch-dark);
+  border-radius: 3px;
+  padding:       10px 12px;
+  font-family:   var(--font-serif);
+  font-size:     13px;
+  position:      relative;
+}
+
+.notice--sponsored {
+  border-color: var(--col-gold);
+  background:   #f8eec0;
+  box-shadow:   0 0 8px rgba(240,192,64,.4);
+}
+
+.notice__seal {
+  display:       block;
+  font-size:     9px;
+  font-family:   var(--font-px);
+  color:         var(--col-amber);
+  margin-bottom: 4px;
+}
+
+.notice__text   { margin-bottom: 6px; line-height: 1.5; }
+.notice__author { font-size: 11px; color: #6a4828; font-style: italic; }
+
+.notice__chain-badge {
+  margin-left: 4px;
+  font-size:   10px;
+  opacity:     .7;
+}
+
+.quest-board__actions {
+  display:   flex;
+  flex-wrap: wrap;
+  gap:       10px;
+  margin-top: 8px;
+}
+
+.quest-board__post {
+  display:        flex;
+  flex-direction: column;
+  gap:            6px;
+  width:          100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BARKEEP
+   ═══════════════════════════════════════════════════════════════════════════ */
+.barkeep__npc {
+  display:     flex;
+  align-items: flex-start;
+  gap:         16px;
+  margin:      16px 0;
+}
+
+/* CSS pixel-art barkeep sprite placeholder */
+.barkeep__sprite {
+  width:        48px;
+  height:       64px;
+  flex-shrink:  0;
+  background:   var(--col-wood);
+  border:       2px solid var(--col-amber);
+  position:     relative;
+  image-rendering: pixelated;
+}
+
+/* Head */
+.barkeep__sprite::before {
+  content:  "";
+  position: absolute;
+  top: 4px; left: 10px;
+  width: 28px; height: 24px;
+  background: #c89060;
+  border-radius: 4px;
+}
+
+.barkeep__bubble {
+  flex:          1;
+  background:    var(--col-parchment);
+  color:         #3a2010;
+  border:        2px solid var(--col-parch-dark);
+  border-radius: 6px;
+  padding:       12px;
+  font-family:   var(--font-serif);
+  font-size:     13px;
+  position:      relative;
+  line-height:   1.5;
+}
+
+.barkeep__bubble--sponsored {
+  border-color: var(--col-gold);
+  background:   #f8eec0;
+}
+
+.barkeep__whisper-tag {
+  display:       block;
+  font-size:     9px;
+  font-family:   var(--font-px);
+  color:         var(--col-amber);
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MERCHANT STALL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.merchant-stall__subtitle {
+  font-size:     9px;
+  color:         var(--col-text-dim);
+  margin-bottom: 16px;
+}
+
+.merchant-stall__empty,
+.merchant-stall__empty .hint {
+  color:     var(--col-text-dim);
+  font-size: 10px;
+  margin-top: 8px;
+}
+
+.merchant-stall__ad {}
+
+.merchant-stall__creative img {
+  max-width:    100%;
+  max-height:   200px;
+  display:      block;
+  margin:       0 auto 12px;
+  border:       2px solid var(--col-amber);
+  border-radius: 3px;
+  image-rendering: pixelated;
+}
+
+.merchant-stall__meta {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+  font-size:      9px;
+  color:          var(--col-text-dim);
+  margin-bottom:  12px;
+}
+
+.merchant-stall__nav {
+  display:     flex;
+  align-items: center;
+  gap:         12px;
+  font-size:   9px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAME TABLE
+   ═══════════════════════════════════════════════════════════════════════════ */
+.game-table__grid {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   10px;
+  margin-bottom:         16px;
+}
+
+.game-table__tile {
+  background:    var(--col-wood);
+  border:        2px solid var(--col-amber);
+  color:         var(--col-gold);
+  font-family:   var(--font-px);
+  font-size:     8px;
+  padding:       14px 8px;
+  cursor:        pointer;
+  border-radius: 4px;
+  transition:    background 0.1s;
+  text-align:    center;
+  line-height:   1.8;
+}
+.game-table__tile:hover { background: var(--col-floor); }
+
+.game-table__back {
+  margin-bottom: 12px;
+  font-size:     8px;
+}
+
+.game-table__wager {
+  margin-top: 16px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GAMES — shared
+   ═══════════════════════════════════════════════════════════════════════════ */
+.game {
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            14px;
+  padding:        12px 0;
+}
+
+.game__opponent, .game__subtitle { font-size: 9px; color: var(--col-text-dim); }
+
+.game__result { text-align: center; }
+.game__outcome { font-size: 14px; color: var(--col-gold); margin-bottom: 8px; }
+.game__result--win  .game__outcome { color: #80e060; }
+.game__result--lose .game__outcome { color: var(--col-red); }
+.game__result--tie  .game__outcome { color: var(--col-amber); }
+
+/* ── Dice ───────────────────────────────────────────────────────────────────── */
+.dice-roll__dice { display: flex; gap: 16px; }
+.die { font-size: 48px; transition: transform 0.05s; }
+.die--rolling { animation: shake 0.07s linear infinite; }
+@keyframes shake { 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(6deg)} }
+.dice-roll__total  { font-size: 14px; color: var(--col-gold); }
+.dice-roll__flavor { font-size: 10px; font-family: var(--font-serif); color: var(--col-text-dim); margin-top: 6px; }
+
+/* ── Arm wrestling ──────────────────────────────────────────────────────────── */
+.arm-wrestling__bar {
+  width:      280px;
+  height:     24px;
+  background: var(--col-floor);
+  border:     2px solid var(--col-amber);
+  border-radius: 4px;
+  overflow:   hidden;
+}
+.arm-wrestling__fill {
+  height:     100%;
+  background: linear-gradient(90deg, var(--col-red), var(--col-amber));
+  transition: width 0.05s;
+}
+.arm-wrestling__btns { display: flex; gap: 12px; }
+
+/* ── Dart board ─────────────────────────────────────────────────────────────── */
+.dart-board__board {
+  position:     relative;
+  width:        140px;
+  height:       140px;
+  border-radius: 50%;
+  overflow:     hidden;
+}
+.dart-ring {
+  position: absolute;
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+}
+.ring--miss   { width:140px; height:140px; background:#4a2010; }
+.ring--single { width:110px; height:110px; background:#1a3a10; }
+.ring--double { width: 80px; height: 80px; background:#8b2020; }
+.ring--triple { width: 54px; height: 54px; background:#1a3a10; }
+.ring--obull  { width: 28px; height: 28px; background:#228020; }
+.ring--bull   { width: 12px; height: 12px; background:#ff2020; }
+
+.dart-board__throws { display: flex; flex-direction: column; gap: 4px; font-size: 9px; }
+.dart-board__throw  { color: var(--col-text-dim); }
+
+/* ── Playing cards ──────────────────────────────────────────────────────────── */
+.card-draw__table {
+  display:     flex;
+  align-items: center;
+  gap:         20px;
+}
+.card-draw__slot    { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.card-draw__label   { font-size: 8px; color: var(--col-text-dim); }
+.card-draw__vs      { font-size: 14px; color: var(--col-amber); }
+.card-draw__fortune { font-size: 10px; font-family: var(--font-serif); font-style: italic; color: var(--col-text-dim); margin-top: 6px; max-width: 280px; text-align: center; }
+
+.playing-card {
+  width:         56px;
+  height:        80px;
+  background:    var(--col-parchment);
+  color:         #3a2010;
+  border:        2px solid var(--col-parch-dark);
+  border-radius: 6px;
+  display:       flex;
+  align-items:   center;
+  justify-content: center;
+  font-family:   var(--font-serif);
+  font-size:     18px;
+  font-weight:   bold;
+}
+.playing-card.suit-red  { color: var(--col-red); }
+.card-back, .playing-card--hidden {
+  background: var(--col-red);
+  color:      var(--col-gold);
+  font-size:  20px;
+}
+.playing-card--revealed { border-color: var(--col-gold); }
+
+/* ── High/Low ───────────────────────────────────────────────────────────────── */
+.high-low__cards   { display: flex; align-items: center; gap: 20px; }
+.high-low__round   { font-size: 9px; color: var(--col-text-dim); }
+.high-low__btns    { display: flex; gap: 12px; }
+.high-low__reveal  { text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   BETTING MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+.betting-modal {
+  border-top: 2px solid var(--col-amber);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.betting-modal__title  { font-size: 11px; color: var(--col-gold); margin-bottom: 12px; }
+.betting-modal__mode   { display: flex; gap: 16px; margin-bottom: 12px; font-size: 9px; }
+.betting-modal__mode label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.betting-modal__amount { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 9px; }
+.betting-modal__amount input { width: 70px; }
+.betting-modal__max    { color: var(--col-text-dim); font-size: 8px; }
+.betting-modal__warn   { color: var(--col-amber); font-size: 9px; }
+.betting-modal__error  { color: var(--col-red); font-size: 9px; }
+.betting-modal__actions { display: flex; gap: 10px; }
+.betting-modal__result  { text-align: center; padding: 12px; }
+.betting-modal__result.win  { color: #80e060; }
+.betting-modal__result.lose { color: var(--col-red); }
+.betting-modal__outcome { font-size: 14px; margin-bottom: 8px; }
+.betting-modal__p2p { text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WALLET BAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+.wallet-bar {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  padding:         8px 16px;
+  background:      #0d0804;
+  border-top:      2px solid var(--col-border);
+  z-index:         var(--z-walletbar);
+  flex-shrink:     0;
+  height:          44px;
+}
+.wallet-bar__brand  { color: var(--col-amber); font-size: 9px; }
+.wallet-bar__info   { display: flex; align-items: center; gap: 12px; }
+.wallet-bar__address{ color: var(--col-text); font-size: 8px; }
+.wallet-bar__balance{ color: var(--col-gold); font-size: 8px; }
+.wallet-bar__error  { color: var(--col-red); font-size: 8px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARED COMPONENTS
+   ═══════════════════════════════════════════════════════════════════════════ */
+.btn {
+  font-family:   var(--font-px);
+  font-size:     9px;
+  padding:       8px 14px;
+  border:        2px solid;
+  border-radius: 3px;
+  cursor:        pointer;
+  transition:    opacity 0.1s;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+.btn--primary  { background: var(--col-amber); border-color: var(--col-gold); color: #1a0800; }
+.btn--primary:hover:not(:disabled)   { background: var(--col-gold); }
+.btn--secondary{ background: var(--col-wood);  border-color: var(--col-amber); color: var(--col-text); }
+.btn--secondary:hover:not(:disabled) { border-color: var(--col-gold); }
+.btn--ghost    { background: transparent; border-color: var(--col-border); color: var(--col-text-dim); }
+.btn--ghost:hover:not(:disabled)     { border-color: var(--col-amber); color: var(--col-text); }
+
+.input {
+  background:    var(--col-bg);
+  border:        2px solid var(--col-border);
+  color:         var(--col-text);
+  font-family:   var(--font-serif);
+  font-size:     13px;
+  padding:       8px;
+  border-radius: 3px;
+  resize:        vertical;
+  width:         100%;
+}
+.input:focus { outline: none; border-color: var(--col-amber); }
+
+.hint         { font-size: 9px; color: var(--col-text-dim); }
+.loading-text { font-size: 9px; color: var(--col-text-dim); animation: blink 1s step-start infinite; }
+@keyframes blink { 50% { opacity: 0; } }
