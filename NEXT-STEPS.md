@@ -150,14 +150,33 @@ mechanic). Click/action are gated by infra we haven't seeded (see below).
 - **Denomination fix:** `TavernBetting.sol` (`1_000 ether`), `deploy.ts`
   (`parseEther`), `tavernBetting.ts` (`parseEther`) now use 18-decimal wei.
 
-### Deferred (need extra infra — Phase 2.1)
-- **Click claims** (`actionType 1`) need a ClickRegistry session, and
-  `recordClick` is **relay-gated** — requires a relay click endpoint, not a
-  user self-call. CTA is a plain link for now.
-- **Action claims** (`actionType 2`) need the pot's `actionVerifier` to sign an
-  `actionSig`; the seed sets `actionVerifier = address(0)`. To enable sponsored
-  game actions, deploy/configure an action verifier and have it co-sign.
-- The seed funds view+click+action pots; only the view pot is currently earnable.
+## Phase 2.1 — Click + action claims ✅ BUILT (needs updated relay deployed)
+
+Both extra earning paths are now wired client-side and validated offline
+(action-sig recovery + claim-hash encoding confirmed).
+
+- **Click** (`actionType 1`): `datumClaims.recordClickSession` generates a random
+  impression nonce, POSTs `{user, campaignId, nonce}` to the relay `/click`,
+  polls `ClickRegistry.hasUnclaimed` until the relay's `recordClick` lands, then
+  files a click claim with `clickSessionHash == nonce` (also bound into the PoW
+  preimage). The Town Crier CTA fires this in the background (link still opens).
+- **Action** (`actionType 2`): `datumClaims.attestAction` POSTs to the relay
+  `/action-attest`; the relay's action-verifier reads the on-chain nonce/prevHash,
+  signs the claim's `computedHash` (EIP-191), and returns `{actionSig, firstNonce,
+  prevHash}`. The Game Table's "Complete sponsored action" button files it.
+
+### Relay changes (separate repo — opened as a PR)
+The canonical relay (`datum/relay-bot.example`) was extended:
+- `/click` now accepts a wallet-aware `{user, campaignId, nonce}` (echoes the
+  nonce, eager-flushes) so the claim can reference the exact session.
+- New `POST /action-attest` + `ACTION_VERIFIER_KEY` env → signs `computedHash`.
+
+### To enable live (operator)
+1. Deploy the updated relay with `ACTION_VERIFIER_KEY` set.
+2. Re-seed with `ACTION_VERIFIER_ADDR` = that key's address (the action pot's
+   `actionVerifier`). View/click pots are unaffected.
+3. Client rates (`CLAIM_RATE_WEI` in `addresses.ts`) must stay ≤ the seeded pot
+   rates (currently equal: click 0.01, action 0.05 PAS).
 
 ### Still operator-run
 8. Deploy `TavernBoard` + `TavernBetting` to Paseo (`npm run deploy`), fill their

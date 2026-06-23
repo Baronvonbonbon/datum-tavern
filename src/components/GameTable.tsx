@@ -12,6 +12,9 @@ import { DartBoard }    from "./games/DartBoard";
 import { CardDraw }     from "./games/CardDraw";
 import { HighLow }      from "./games/HighLow";
 import { BettingModal } from "./BettingModal";
+import { useDatumCampaigns } from "../hooks/useDatumCampaigns";
+import { useEarningsContext } from "../hooks/earningsContext";
+import { ACTION_TYPE } from "../lib/addresses";
 
 const GAMES = [
   { id: GameType.DICE,        label: "🎲 Dice Roll",     component: DiceRoll     },
@@ -29,9 +32,15 @@ interface Props {
 export function GameTable({ signer }: Props) {
   const [selected, setSelected] = useState<GameType | null>(null);
   const [betting,  setBetting]  = useState(false);
+  const { ads } = useDatumCampaigns();
+  const earnings = useEarningsContext();
 
   const game = GAMES.find(g => g.id === selected);
   const GameComponent = game?.component ?? null;
+
+  // This round is "sponsored by" the first active campaign; completing the
+  // sponsored action settles a type-2 action claim (relay verifier attests).
+  const sponsor = ads[0] ?? null;
 
   return (
     <div className="modal game-table">
@@ -72,6 +81,23 @@ export function GameTable({ signer }: Props) {
               <span className="hint">Connect wallet to wager PAS</span>
             )}
           </div>
+
+          {/* ── sponsored action: earn a Datum action reward ── */}
+          {earnings && sponsor && (
+            <div className="game-table__sponsor">
+              <span className="game-table__sponsor-tag">
+                ⚔ This round sponsored by {sponsor.title || `Campaign #${sponsor.campaignId}`}
+              </span>
+              <button
+                className="btn btn--secondary"
+                disabled={earnings.busy}
+                onClick={() => void earnings.claim(sponsor.campaignId, ACTION_TYPE.ACTION, 1n)}
+              >
+                {earnings.busy ? "Claiming…" : "🎁 Complete sponsored action"}
+              </button>
+              {earnings.status && <span className="game-table__sponsor-status">{earnings.status}</span>}
+            </div>
+          )}
         </div>
       )}
 

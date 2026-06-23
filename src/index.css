@@ -631,3 +631,17 @@ body {
 .merchant-stall__earn-status{ color: var(--col-gold); font-size: 8px; }
 .merchant-stall__headline   { color: var(--col-gold); margin: 8px 0 4px; }
 .merchant-stall__body       { color: var(--col-text); font-size: 9px; line-height: 1.6; }
+
+/* ── Game Table sponsored-action block ───────────────────────────────────────── */
+.game-table__sponsor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px dashed var(--col-amber);
+  border-radius: 4px;
+}
+.game-table__sponsor-tag    { color: var(--col-parchment); font-size: 8px; }
+.game-table__sponsor-status { color: var(--col-gold); font-size: 8px; }

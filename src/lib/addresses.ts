@@ -29,6 +29,7 @@ export const ADDRESSES = {
   datumBudgetLedger:     "0xCA9411af5a30729D59eE2F46056021Ac9a2415a8",
   datumPaymentVault:     "0xe511B0E7e114671e452dA34fAeb1081bB5a413F8",
   datumPowEngine:        "0xE4E30FfF57f65645edE7b0F91ACca7A939EF0104", // per-impression PoW (enforced live)
+  datumClickRegistry:    "0x5369a13873Cb9Dc3ad8670b5F357766cfb63d771", // click sessions (relay records, settlement claims)
 
   // ── Demo actors (filled by seed-tavern.ts, Phase 1) ───────────────────────
   // The tavern's publisher address, registered in DatumPublishers.

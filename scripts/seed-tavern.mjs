@@ -43,6 +43,10 @@ const RPC = process.env.TESTNET_RPC || "https://eth-rpc-testnet.polkadot.io/";
 const ADDR_PATH = process.env.DATUM_ADDRESSES
   || resolve(ROOT, "../datum/alpha-core/deployed-addresses.json");
 const DIANA = process.env.DIANA_ADDR || "0xcA5668fB864Acab0aC7f4CFa73949174720b58D0";
+// Action-verifier address for type-2 (sponsored-action) pots. Must equal the
+// address of the relay's ACTION_VERIFIER_KEY. address(0) → action pot is funded
+// but not claimable (no verifier to attest).
+const ACTION_VERIFIER = process.env.ACTION_VERIFIER_ADDR || "0x0000000000000000000000000000000000000000";
 const N = Number(process.env.CAMPAIGNS || 5);
 const PUBLISHER_TAKE_BPS = Number(process.env.TAVERN_TAKE_BPS || 4000); // 40% to publisher
 const GAS = { gasLimit: 900_000_000n, gasPrice: 1_000_000_000_000n, type: 0 };
@@ -193,10 +197,13 @@ async function main() {
 
   // Per-campaign budgets (18-decimal wei — pallet-revive EVM scale).
   const POTS = [
-    { actionType: 0, budgetWei: parseEther("0.6"), dailyCapWei: parseEther("0.6"), rateWei: parseEther("1"),    actionVerifier: ZeroAddress }, // view: 1 PAS CPM → 0.001/view
-    { actionType: 1, budgetWei: parseEther("0.3"), dailyCapWei: parseEther("0.3"), rateWei: parseEther("0.01"), actionVerifier: ZeroAddress }, // click: 0.01 PAS/click
-    { actionType: 2, budgetWei: parseEther("0.1"), dailyCapWei: parseEther("0.1"), rateWei: parseEther("0.05"), actionVerifier: ZeroAddress }, // action: 0.05 PAS/action
+    { actionType: 0, budgetWei: parseEther("0.6"), dailyCapWei: parseEther("0.6"), rateWei: parseEther("1"),    actionVerifier: ZeroAddress },     // view: 1 PAS CPM → 0.001/view
+    { actionType: 1, budgetWei: parseEther("0.3"), dailyCapWei: parseEther("0.3"), rateWei: parseEther("0.01"), actionVerifier: ZeroAddress },     // click: 0.01 PAS/click
+    { actionType: 2, budgetWei: parseEther("0.1"), dailyCapWei: parseEther("0.1"), rateWei: parseEther("0.05"), actionVerifier: ACTION_VERIFIER }, // action: 0.05 PAS/action
   ];
+  if (ACTION_VERIFIER === ZeroAddress) {
+    console.log("  [note] ACTION_VERIFIER_ADDR unset — action pots funded but not claimable");
+  }
   const perCampaign = POTS.reduce((s, p) => s + p.budgetWei, 0n); // 1 PAS
 
   // ── [1] fund actors from Alice ────────────────────────────────────────────

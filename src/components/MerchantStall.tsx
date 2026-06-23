@@ -86,7 +86,15 @@ export function MerchantStall() {
           {current.title && <h3 className="merchant-stall__headline">{current.title}</h3>}
           {current.body && <p className="merchant-stall__body">{current.body}</p>}
           {current.cta && current.ctaUrl && (
-            <a className="btn btn--primary" href={current.ctaUrl} target="_blank" rel="noopener noreferrer">
+            <a
+              className="btn btn--primary"
+              href={current.ctaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              // Fire a click claim in the background; the link still opens.
+              onClick={() => { if (earnings && current) void earnings.claim(current.campaignId, ACTION_TYPE.CLICK, 1n); }}
+              title={earnings ? "Clicking also earns a click reward" : undefined}
+            >
               {current.cta}
             </a>
           )}
