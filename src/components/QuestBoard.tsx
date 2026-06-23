@@ -12,7 +12,7 @@
 import { useState, useCallback } from "react";
 import { Signer } from "ethers";
 import { fetchRandomMessages, postMessage, BoardMessage } from "../lib/tavernBoard";
-import { pickRandomAd, shouldShowAd, ipfsUrl, DatumAd } from "../lib/datumContracts";
+import { pickRandomAd, shouldShowAd, DatumAd } from "../lib/datumContracts";
 import { sampleMockMessages, MockMessage } from "../data/mockMessages";
 
 type Entry = (BoardMessage | MockMessage) & { _ad?: DatumAd };
@@ -44,7 +44,7 @@ export function QuestBoard({ signer }: Props) {
           const sponsored: Entry = {
             id:      `ad-${ad.campaignId}`,
             author:  ad.advertiser,
-            text:    `[Sponsored] ${ipfsUrl(ad.ipfsHash)}`,
+            text:    ad.body || ad.title || ad.description || "A sponsored notice from a passing merchant.",
             onChain: false,
             _ad:     ad,
           } as unknown as Entry;

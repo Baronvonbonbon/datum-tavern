@@ -1,4 +1,4 @@
-import { Contract, Signer, parseEther } from "ethers";
+import { Contract, Signer } from "ethers";
 import ABI from "../../abis/TavernBetting.json";
 import { ADDRESSES } from "./addresses";
 
@@ -42,7 +42,7 @@ export async function betVsHouse(
     try {
       const parsed = iface.parseLog(log);
       if (parsed?.name === "GameResolved") {
-        const [gameId, winner, payout] = parsed.args as [bigint, string, bigint];
+        const [gameId, winner, payout] = parsed.args as unknown as [bigint, string, bigint];
         const signerAddr = (await signer.getAddress()).toLowerCase();
         return { gameId, winner, payout, p1Wins: winner.toLowerCase() === signerAddr };
       }
@@ -67,7 +67,7 @@ export async function openP2PGame(
     try {
       const parsed = iface.parseLog(log);
       if (parsed?.name === "GameCreated") {
-        return (parsed.args as [bigint])[0];
+        return (parsed.args as unknown as [bigint])[0];
       }
     } catch { /* not our event */ }
   }
@@ -86,7 +86,7 @@ export async function joinP2PGame(signer: Signer, gameId: bigint): Promise<GameR
     try {
       const parsed = iface.parseLog(log);
       if (parsed?.name === "GameResolved") {
-        const [id, winner, payout] = parsed.args as [bigint, string, bigint];
+        const [id, winner, payout] = parsed.args as unknown as [bigint, string, bigint];
         const signerAddr = (await signer.getAddress()).toLowerCase();
         return { gameId: id, winner, payout, p1Wins: winner.toLowerCase() === signerAddr };
       }

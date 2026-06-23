@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { fetchTavernAds, ipfsUrl, DatumAd } from "../lib/datumContracts";
+import { fetchTavernAds, DatumAd } from "../lib/datumContracts";
 
 export function MerchantStall() {
   const [ads,     setAds]     = useState<DatumAd[]>([]);
@@ -40,14 +40,23 @@ export function MerchantStall() {
 
       {!loading && current && (
         <div className="merchant-stall__ad">
-          <div className="merchant-stall__creative">
-            {/* If IPFS hash resolves to an image, render it; otherwise show hash */}
-            <img
-              src={ipfsUrl(current.ipfsHash)}
-              alt="Sponsored creative"
-              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-            />
-          </div>
+          {current.imageUrl && (
+            <div className="merchant-stall__creative">
+              <img
+                src={current.imageUrl}
+                alt={current.title || "Sponsored creative"}
+                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+              />
+            </div>
+          )}
+
+          {current.title && <h3 className="merchant-stall__headline">{current.title}</h3>}
+          {current.body && <p className="merchant-stall__body">{current.body}</p>}
+          {current.cta && current.ctaUrl && (
+            <a className="btn btn--primary" href={current.ctaUrl} target="_blank" rel="noopener noreferrer">
+              {current.cta}
+            </a>
+          )}
 
           <div className="merchant-stall__meta">
             <span className="merchant-stall__advertiser">
@@ -56,11 +65,6 @@ export function MerchantStall() {
             <span className="merchant-stall__campaign">
               Campaign #{current.campaignId.toString()}
             </span>
-            {current.expiresAt > 0 && (
-              <span className="merchant-stall__expires">
-                Until: {new Date(current.expiresAt * 1000).toLocaleDateString()}
-              </span>
-            )}
           </div>
 
           {ads.length > 1 && (
