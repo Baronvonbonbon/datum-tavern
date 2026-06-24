@@ -14,8 +14,8 @@
 
 export const ADDRESSES = {
   // ── Tavern-owned (fill after deploy) ──────────────────────────────────────
-  tavernBoard:   "0x0000000000000000000000000000000000000000",
-  tavernBetting: "0x0000000000000000000000000000000000000000",
+  tavernBoard:   "0x16cf546CeEb1FF1daaEed6153d3C1d09BbFE1Fb9",
+  tavernBetting: "0xd97cE750f7bd09b2D2237d9250DEF18c0F0aa3a7",
 
   // ── Datum protocol (Paseo / polkadotTestnet) ──────────────────────────────
   datumCampaigns:        "0xE0C1C18af2532af8b36E8DfB7A67A78744BdB07F",
@@ -42,7 +42,6 @@ export const ADDRESSES = {
 export const PASEO_CHAIN_ID = 420420417; // 0x1900_0001
 export const PASEO_RPC_URL  = "https://eth-rpc-testnet.polkadot.io/";
 export const PASEO_EXPLORER = "https://blockscout-testnet.polkadot.io/";
-export const PINE_CHAIN     = "paseo-asset-hub"; // smoldot light-client chain spec id
 
 // IPFS gateway for resolving creative metadata CIDs.
 export const IPFS_GATEWAY = "https://ipfs-datum.javcon.io/ipfs/";

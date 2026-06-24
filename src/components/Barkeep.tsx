@@ -1,11 +1,15 @@
 /**
  * Barkeep — center-back NPC.
- * Cycles through flavor dialogue; 1 in AD_INTERVAL lines is a sponsored whisper
- * drawn from active Datum campaigns.
+ * Cycles through flavor dialogue; ~1 in AD_INTERVAL lines is a sponsored whisper
+ * from an active Datum campaign. The whispers you hear become your "tab" — and
+ * you settle the tab (a Datum view-claim) right here for your cut.
  */
 
 import { useState, useCallback } from "react";
-import { pickRandomAd, AD_INTERVAL } from "../lib/datumContracts";
+import { formatEther } from "ethers";
+import { pickRandomAd, AD_INTERVAL, DatumAd } from "../lib/datumContracts";
+import { useEarningsContext } from "../hooks/earningsContext";
+import { ACTION_TYPE } from "../lib/addresses";
 import { OnChainNote } from "./OnChainNote";
 
 const BARKEEP_LINES = [
@@ -27,6 +31,9 @@ export function Barkeep() {
   const [line,    setLine]    = useState<string | null>(null);
   const [isAd,    setIsAd]    = useState(false);
   const [adLabel, setAdLabel] = useState("");
+  const [whispers, setWhispers] = useState(0);          // sponsored whispers heard ("your tab")
+  const [tabAd,    setTabAd]    = useState<DatumAd | null>(null); // campaign to settle against
+  const earnings = useEarningsContext();
 
   const speak = useCallback(async () => {
     _pullIdx++;
@@ -34,10 +41,12 @@ export function Barkeep() {
       const ad = await pickRandomAd();
       if (ad) {
         setIsAd(true);
-        setAdLabel(ad.advertiser.slice(0, 8) + "…");
+        setAdLabel(ad.title || ad.advertiser.slice(0, 8) + "…");
+        setWhispers((w) => w + 1);
+        setTabAd(ad);
         setLine(
-          `*leans in and lowers voice* A traveller left coin to spread word about something. ` +
-          `Ask me if ye want to know more. [${ad.advertiser.slice(0, 6)}]`
+          `*leans in and lowers voice* "${ad.title || "A traveller"}" left coin to spread word — ` +
+          `that's another mark on yer tab. Settle up when ye like.`
         );
         return;
       }
@@ -46,6 +55,15 @@ export function Barkeep() {
     setAdLabel("");
     setLine(BARKEEP_LINES[Math.floor(Math.random() * BARKEEP_LINES.length)]);
   }, []);
+
+  const settleTab = async () => {
+    if (!earnings || !tabAd || whispers <= 0) return;
+    const res = await earnings.claim(tabAd.campaignId, ACTION_TYPE.VIEW, BigInt(whispers));
+    if (res.ok) setWhispers(0);
+  };
+
+  // What the tab is worth: viewBid is per-1000 (CPM) × whispers heard.
+  const tabWei = tabAd ? (tabAd.viewBidWei * BigInt(whispers)) / 1000n : 0n;
 
   return (
     <div className="modal barkeep">
@@ -68,10 +86,34 @@ export function Barkeep() {
         {line ? "Say Something Else" : "Talk to the Barkeep"}
       </button>
 
+      {/* ── Settle the Tab: a tavern-level Datum claim ── */}
+      <div className="barkeep__tab">
+        <span className="barkeep__tab-line">
+          🧾 Your tab: <b>{whispers}</b> whisper{whispers === 1 ? "" : "s"} heard
+          {whispers > 0 && ` · worth ~${Number(formatEther(tabWei)).toFixed(5)} PAS`}
+        </span>
+        {earnings ? (
+          <button
+            className="btn btn--primary"
+            onClick={settleTab}
+            disabled={earnings.busy || whispers <= 0}
+            title="Settle your tab — claim your cut for the sponsored whispers you've heard"
+          >
+            {earnings.busy ? "Squaring up…" : "💰 Settle the Tab"}
+          </button>
+        ) : (
+          <span className="hint">Connect a wallet to settle your tab for coin.</span>
+        )}
+        {earnings?.status && <span className="barkeep__tab-status">{earnings.status}</span>}
+      </div>
+
       <OnChainNote>
-        Conversational placement: roughly every third line is a "whispered"
-        sponsorship drawn from an active Datum campaign for this tavern, tagged so
-        it's clearly marked. The NPC dialogue carries the ad instead of an interstitial.
+        Conversational placement: ~every third line is a "whispered" sponsorship
+        from an active Datum campaign, clearly tagged. The whispers tally your
+        <b> tab</b>; <b>Settle the Tab</b> files a Datum view-claim for that many
+        impressions — the relay settles it on <code>DatumSettlement</code> and
+        your revenue share lands in <code>PaymentVault</code> (collect it in the
+        wallet bar). The dialogue carries the ad instead of an interstitial.
       </OnChainNote>
     </div>
   );

@@ -32,8 +32,9 @@ export function QuestBoard({ signer }: Props) {
   const pullMessages = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch new on-chain messages (3 random)
-      const onChain = await fetchRandomMessages(3);
+      // Fetch new on-chain messages (3 random). Never let a chain hiccup block
+      // the pull — fall back to mock-only so the board always refreshes.
+      const onChain = await fetchRandomMessages(3).catch(() => []);
       // Mix with mock messages to fill gaps
       const mock    = sampleMockMessages(3);
       const batch: Entry[] = [...onChain, ...mock].sort(() => Math.random() - 0.5);
@@ -84,24 +85,35 @@ export function QuestBoard({ signer }: Props) {
           {loading ? "Pulling…" : "Pull New Messages"}
         </button>
 
-        {signer && (
-          <div className="quest-board__post">
-            <textarea
-              className="input"
-              maxLength={280}
-              rows={2}
-              placeholder="Leave a notice on the board… (on-chain)"
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
-            />
+        <div className="quest-board__post">
+          <h3 className="quest-board__post-title">✒ Nail a notice to the board</h3>
+          <textarea
+            className="input"
+            maxLength={280}
+            rows={2}
+            placeholder="e.g. “Reward: 50 PAS for the head of the Ashwood wyrm. — see the barkeep.”"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            disabled={!signer}
+          />
+          {/* Context: spell out exactly what gets written on-chain. */}
+          <p className="quest-board__post-context">
+            This calls <code>TavernBoard.post(text)</code> on Paseo. Your wallet
+            address is recorded as the author, the text is stored on-chain
+            (public &amp; permanent), and you sign + pay the gas in MetaMask.
+            {draft.trim() && <> Writing <b>{new Blob([draft.trim()]).size}</b> bytes.</>}
+          </p>
+          {signer ? (
             <button className="btn btn--primary" onClick={handlePost} disabled={post.busy || !draft.trim()}>
-              {post.busy ? "Posting…" : "Post Notice (sign)"}
+              {post.busy ? "Posting…" : "Post Notice (sign in MetaMask)"}
             </button>
-            {post.phase !== "idle" && (
-              <p className={`quest-board__post-status quest-board__post-status--${post.phase}`}>{post.message}</p>
-            )}
-          </div>
-        )}
+          ) : (
+            <p className="hint">Connect a wallet to post to the board.</p>
+          )}
+          {post.phase !== "idle" && (
+            <p className={`quest-board__post-status quest-board__post-status--${post.phase}`}>{post.message}</p>
+          )}
+        </div>
       </div>
 
       <OnChainNote>

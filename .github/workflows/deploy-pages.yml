@@ -23,34 +23,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      # This repo → ./datum-tavern ; the pine-rpc sibling → ./pine-rpc so the
-      # `file:../pine-rpc` dependency resolves exactly like it does locally.
-      - name: Checkout datum-tavern
-        uses: actions/checkout@v4
-        with:
-          path: datum-tavern
-      - name: Checkout pine-rpc
-        uses: actions/checkout@v4
-        with:
-          repository: Baronvonbonbon/pine-rpc
-          path: pine-rpc
-
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      # pine-rpc ships no built dist in git, so build it before the tavern install.
-      - name: Build pine-rpc
-        working-directory: pine-rpc
-        run: npm install && npm run build
-
-      - name: Build tavern (GitHub Pages base)
-        working-directory: datum-tavern
+      - name: Build (GitHub Pages base)
         run: npm install && npm run build:pages
-
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: datum-tavern/dist
+          path: dist
 
   deploy:
     needs: build

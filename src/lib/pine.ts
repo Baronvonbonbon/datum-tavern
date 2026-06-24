@@ -1,39 +1,22 @@
-import { PineProvider } from "pine-rpc";
-import { BrowserProvider } from "ethers";
-import { PINE_CHAIN } from "./addresses";
-
-// Singleton Pine provider — initialises smoldot light client once. The
-// connect() promise is cached so concurrent callers await the same sync and
-// we never connect twice.
-let _pine: PineProvider | null = null;
-let _connecting: Promise<void> | null = null;
-
-export async function getPineProvider(): Promise<PineProvider> {
-  if (!_pine) {
-    _pine = new PineProvider({ chain: PINE_CHAIN });
-  }
-  // connect() resolves once smoldot has synced to the finalized head.
-  _connecting ??= _pine.connect();
-  await _connecting;
-  return _pine;
-}
+import { BrowserProvider, JsonRpcProvider } from "ethers";
+import { PASEO_RPC_URL, PASEO_CHAIN_ID } from "./addresses";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Read path: trustless reads via the Pine smoldot light client.
-//   PineProvider is an EIP-1193 provider, so it wraps in a BrowserProvider —
-//   NOT a JsonRpcProvider (the old code passed the provider object where a URL
-//   string is expected, which never worked).
+// Read path: a plain JSON-RPC provider against Paseo's public eth-rpc. The
+// gateway sends permissive CORS headers, so browser reads work directly — fast,
+// reliable, and with no smoldot/WASM to load (important on static hosting like
+// GitHub Pages). (Earlier this used the Pine smoldot light client; dropped for
+// the hosted demo.)
 //
 // Write path: MetaMask. The injected wallet signs and submits every tx.
 // ─────────────────────────────────────────────────────────────────────────────
 
-let _readProvider: BrowserProvider | null = null;
+let _readProvider: JsonRpcProvider | null = null;
 
-/** Read-only ethers provider backed by the Pine light client (no wallet). */
-export async function getReadProvider(): Promise<BrowserProvider> {
+/** Read-only ethers provider (public Paseo RPC, no wallet needed). */
+export async function getReadProvider(): Promise<JsonRpcProvider> {
   if (!_readProvider) {
-    const pine = await getPineProvider();
-    _readProvider = new BrowserProvider(pine);
+    _readProvider = new JsonRpcProvider(PASEO_RPC_URL, PASEO_CHAIN_ID, { staticNetwork: true });
   }
   return _readProvider;
 }

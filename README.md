@@ -92,8 +92,8 @@ impressions, and the game stays immersive — all settled on-chain.*
 ## How it works
 
 - **Frontend:** Vite + React + TypeScript, single-page (no backend).
-- **Reads:** the [Pine](https://github.com/Baronvonbonbon/pine-rpc) smoldot
-  light-client (trustless, in-browser). **Writes/signing:** MetaMask.
+- **Reads:** a plain JSON-RPC provider against Paseo's public `eth-rpc`
+  (permissive CORS, no WASM to load). **Writes/signing:** MetaMask.
 - **Contracts:**
   - *Tavern-owned* — `TavernBoard` (message board), `TavernBetting` (P2P / vs-house wagers).
   - *Datum protocol* — campaigns, creatives, settlement, payment vault, relay,

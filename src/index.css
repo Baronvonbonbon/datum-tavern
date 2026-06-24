@@ -739,3 +739,14 @@ body {
 .merchant-stall__fallback-cat { font-size: 8px; letter-spacing: 3px; color: var(--col-amber); }
 .merchant-stall__fallback-title { font-size: 14px; color: var(--col-gold); font-weight: 700; text-align: center; }
 .merchant-stall__error { color: var(--col-red); font-size: 9px; }
+
+/* ── Quest Board post box ────────────────────────────────────────────────────── */
+.quest-board__post { margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.22); border: 1px dashed var(--col-amber); border-radius: 4px; }
+.quest-board__post-title { color: var(--col-gold); font-size: 8px; margin-bottom: 6px; }
+.quest-board__post-context { color: var(--col-text-dim); font-size: 10px; line-height: 1.5; margin: 6px 0; font-family: var(--font-serif); }
+.quest-board__post-context code { font-family: monospace; color: var(--col-parchment); background: rgba(0,0,0,0.3); padding: 0 3px; border-radius: 2px; }
+
+/* ── Barkeep: settle the tab ─────────────────────────────────────────────────── */
+.barkeep__tab { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.25); border: 1px dashed var(--col-gold); border-radius: 4px; }
+.barkeep__tab-line { color: var(--col-parchment); font-size: 9px; }
+.barkeep__tab-status { color: var(--col-gold); font-size: 8px; }

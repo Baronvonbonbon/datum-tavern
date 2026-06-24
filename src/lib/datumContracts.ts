@@ -138,33 +138,32 @@ export async function fetchTavernAds(): Promise<DatumAd[]> {
     const campaigns = new Contract(ADDRESSES.datumCampaigns,        CAMPAIGNS_ABI, provider);
     const creative  = new Contract(ADDRESSES.datumCampaignCreative, CREATIVE_ABI,  provider);
 
-    const next: bigint = await campaigns.nextCampaignId();
+    const next = Number(await campaigns.nextCampaignId());
 
-    // Phase 1: collect matching ids + on-chain fields.
+    // Phase 1: find this tavern's campaigns. Scan publishers in parallel chunks
+    // (sequential would be ~Ns for a chain with many campaigns) — newest first,
+    // since the tavern's campaigns are the most recently created.
+    const ids = Array.from({ length: next - 1 }, (_, i) => BigInt(next - 1 - i));
+    const CHUNK = 25;
     const matches: Omit<DatumAd, "title" | "description" | "body" | "cta" | "ctaUrl" | "imageUrl">[] = [];
-    for (let id = 1n; id < next; id++) {
-      try {
-        const publisher: string = await campaigns.getCampaignPublisher(id);
-        if (publisher.toLowerCase() !== tavern) continue;
-
-        const status: bigint = await campaigns.getCampaignStatus(id);
-        if (Number(status) !== STATUS_ACTIVE) continue;
-
-        const [advertiser, viewBid, metadataHash] = await Promise.all([
-          campaigns.getCampaignAdvertiser(id),
-          campaigns.getCampaignViewBid(id).catch(() => 0n),
-          creative.campaignMetadata(id).catch(() => ZERO_HASH),
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const slice = ids.slice(i, i + CHUNK);
+      const pubs = await Promise.all(
+        slice.map((id) => campaigns.getCampaignPublisher(id).then(String).catch(() => "")),
+      );
+      const mine = slice.filter((_, j) => pubs[j].toLowerCase() === tavern);
+      const details = await Promise.all(mine.map(async (id) => {
+        const [status, advertiser, viewBid, metadataHash] = await Promise.all([
+          campaigns.getCampaignStatus(id).then(Number).catch(() => -1),
+          campaigns.getCampaignAdvertiser(id).then(String).catch(() => ""),
+          campaigns.getCampaignViewBid(id).then(BigInt).catch(() => 0n),
+          creative.campaignMetadata(id).then(String).catch(() => ZERO_HASH),
         ]);
-
-        matches.push({
-          campaignId: id,
-          advertiser: String(advertiser),
-          publisher,
-          viewBidWei: BigInt(viewBid),
-          metadataHash: String(metadataHash),
-        });
-      } catch {
-        /* skip unreadable campaign */
+        return { id, status, advertiser, viewBid, metadataHash };
+      }));
+      for (const d of details) {
+        if (d.status !== STATUS_ACTIVE) continue;
+        matches.push({ campaignId: d.id, advertiser: d.advertiser, publisher: tavern, viewBidWei: d.viewBid, metadataHash: d.metadataHash });
       }
     }
 
