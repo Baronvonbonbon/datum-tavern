@@ -1,6 +1,6 @@
 import { Contract, Signer } from "ethers";
 import { getReadProvider } from "./pine";
-import { ADDRESSES } from "./addresses";
+import { ADDRESSES, PASEO_TX } from "./addresses";
 import ABI from "../../abis/TavernBoard.json";
 
 export interface BoardMessage {
@@ -54,7 +54,7 @@ export async function getMessage(id: number): Promise<BoardMessage> {
 /** Post a message on-chain. Requires a connected wallet signer. Returns the tx hash. */
 export async function postMessage(signer: Signer, text: string): Promise<string> {
   const c = getContract(signer);
-  const tx = await c.post(text);
+  const tx = await c.post(text, PASEO_TX);
   await tx.wait();
   return tx.hash;
 }

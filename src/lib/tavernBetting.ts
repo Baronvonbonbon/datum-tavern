@@ -1,6 +1,6 @@
 import { Contract, Signer, parseEther } from "ethers";
 import ABI from "../../abis/TavernBetting.json";
-import { ADDRESSES } from "./addresses";
+import { ADDRESSES, PASEO_TX } from "./addresses";
 import { getReadProvider } from "./pine";
 
 export enum GameType {
@@ -38,7 +38,7 @@ export async function betVsHouse(
   if (pasBet <= 0 || pasBet > MAX_BET_PAS) throw new Error("Bet out of range");
   const value = pasToWei(pasBet);
   const c = getContract(signer);
-  const tx = await c.createGame(gameType, true, { value });
+  const tx = await c.createGame(gameType, true, { value, ...PASEO_TX });
   const receipt = await tx.wait();
 
   const iface = c.interface;
@@ -63,7 +63,7 @@ export async function openP2PGame(
 ): Promise<bigint> {
   const value = pasToWei(pasBet);
   const c = getContract(signer);
-  const tx = await c.createGame(gameType, false, { value });
+  const tx = await c.createGame(gameType, false, { value, ...PASEO_TX });
   const receipt = await tx.wait();
 
   const iface = c.interface;
@@ -82,7 +82,7 @@ export async function openP2PGame(
 export async function joinP2PGame(signer: Signer, gameId: bigint): Promise<GameResult> {
   const c = getContract(signer);
   const game = await c.getGame(gameId);
-  const tx = await c.joinGame(gameId, { value: game.betAmount });
+  const tx = await c.joinGame(gameId, { value: game.betAmount, ...PASEO_TX });
   const receipt = await tx.wait();
 
   const iface = c.interface;
@@ -134,7 +134,7 @@ export async function getGame(id: bigint): Promise<GameInfo> {
 /** Cancel an open P2P game after its join timeout. Returns the tx hash. */
 export async function cancelGame(signer: Signer, id: bigint): Promise<string> {
   const c = getContract(signer);
-  const tx = await c.cancelGame(id);
+  const tx = await c.cancelGame(id, PASEO_TX);
   await tx.wait();
   return tx.hash;
 }

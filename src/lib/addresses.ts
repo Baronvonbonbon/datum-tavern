@@ -53,6 +53,16 @@ export const ACTION_TYPE = {
   ACTION: 2, // completed a sponsored in-game action
 } as const;
 
+// Paseo's pallet-revive eth-rpc doesn't do EIP-1559 fee estimation cleanly, so
+// browser wallets fail with "cannot estimate fee". Send LEGACY txs with an
+// explicit gasPrice + a generous gasLimit (actual usage is tiny — e.g. a board
+// post is ~13k gas / 0.013 PAS; the limit is just the max-fee reservation).
+export const PASEO_TX = {
+  gasLimit: 5_000_000n,
+  gasPrice: 1_000_000_000_000n,
+  type: 0 as const,
+};
+
 // Datum relay endpoint (user-signed claims → POST /relay/submit). The relay
 // co-signs the publisher side (Diana) and submits DatumRelay.settleClaimsFor.
 export const RELAY_URL = "https://relay.javcon.io";

@@ -18,7 +18,7 @@
 
 import { Contract, Signer, Provider, AbiCoder, keccak256, hexlify, randomBytes } from "ethers";
 import { getReadProvider } from "./pine";
-import { ADDRESSES, RELAY_URL, CLAIM_RATE_WEI, ACTION_TYPE } from "./addresses";
+import { ADDRESSES, RELAY_URL, CLAIM_RATE_WEI, ACTION_TYPE, PASEO_TX } from "./addresses";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 const ZERO_HASH = "0x" + "0".repeat(64);
@@ -296,7 +296,7 @@ export async function getUserBalance(user: string): Promise<bigint> {
 /** Withdraw accrued earnings to the user's wallet (MetaMask tx). */
 export async function withdrawEarnings(signer: Signer): Promise<void> {
   const vault = new Contract(ADDRESSES.datumPaymentVault, VAULT_ABI, signer);
-  const tx = await vault.withdrawUser();
+  const tx = await vault.withdrawUser(PASEO_TX);
   await tx.wait();
 }
 
