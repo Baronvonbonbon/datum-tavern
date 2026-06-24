@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { BrowserProvider, Signer, formatEther } from "ethers";
 import { getBrowserProvider } from "../lib/pine";
-import { PASEO_CHAIN_ID } from "../lib/addresses";
+import { PASEO_CHAIN_ID, PASEO_RPC_URL, PASEO_EXPLORER } from "../lib/addresses";
 
 export interface WalletState {
   address:    string | null;
@@ -27,10 +27,21 @@ export function useWallet() {
 
       const network = await provider.getNetwork();
       if (Number(network.chainId) !== PASEO_CHAIN_ID) {
-        // Ask wallet to switch to Paseo Asset Hub
-        await provider.send("wallet_switchEthereumChain", [
-          { chainId: `0x${PASEO_CHAIN_ID.toString(16)}` },
-        ]);
+        const hexChainId = `0x${PASEO_CHAIN_ID.toString(16)}`;
+        try {
+          // Try to switch first…
+          await provider.send("wallet_switchEthereumChain", [{ chainId: hexChainId }]);
+        } catch {
+          // …the wallet doesn't have Paseo yet (MetaMask 4902 / Nova "not found").
+          // Add it (this also switches), then we're on-chain.
+          await provider.send("wallet_addEthereumChain", [{
+            chainId: hexChainId,
+            chainName: "Paseo Asset Hub",
+            nativeCurrency: { name: "Paseo", symbol: "PAS", decimals: 18 },
+            rpcUrls: [PASEO_RPC_URL],
+            blockExplorerUrls: [PASEO_EXPLORER],
+          }]);
+        }
       }
 
       const signer  = await provider.getSigner();
