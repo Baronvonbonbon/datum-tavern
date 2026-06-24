@@ -32,6 +32,7 @@
   --z-overlay: 100;
   --z-modal:   110;
   --z-walletbar: 200;
+  --build-id: "20260624a"; /* bumps the CSS asset hash per deploy */
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
@@ -759,3 +760,4 @@ body {
 .barkeep__tab { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.25); border: 1px dashed var(--col-gold); border-radius: 4px; }
 .barkeep__tab-line { color: var(--col-parchment); font-size: 9px; }
 .barkeep__tab-status { color: var(--col-gold); font-size: 8px; }
+/* build 2026-06-24.1 */
