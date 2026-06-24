@@ -14,10 +14,11 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; cancel superseded runs.
+# One deploy at a time. Do NOT cancel in-progress runs — cancelling a deploy
+# mid-flight leaves Pages serving an index.html whose hashed assets 404.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
