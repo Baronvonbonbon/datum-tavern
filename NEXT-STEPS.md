@@ -206,12 +206,25 @@ claims were rejected (reason 22) protocol-wide. The owner called
 
 ---
 
-## Phase 3 — Contract Console (the "all functions" requirement)
+## Phase 3 — Contract Console ✅ DONE
 
-9. A separate `/console` page with grouped panels exposing **every** function of
-   `TavernBoard`, `TavernBetting`, and the Datum read/settle surface — inputs,
-   call/sign buttons, inline results. Keeps the tavern itself immersive while
-   making the full contract surface reachable.
+A **Contract Console** view (toggle in the wallet bar: ⚙ Console / 🍺 Tavern)
+with grouped panels exposing every function — inputs, call/submit buttons, and
+an inline status/result readout per call:
+- **TavernBoard**: `count`, `getMessage(id)`, `post(text)`.
+- **TavernBetting**: `gameCount`, `houseBalance`, `getGame(id)`, `createGame`
+  (vs-house + P2P), `joinGame(id)`, `cancelGame(id)`.
+- **Datum**: active tavern campaigns, `PaymentVault.userBalance`,
+  `submitClaim(campaignId, actionType, eventCount)`, `withdrawUser`.
+
+Reads are free; writes prompt MetaMask. Built on a shared `useAsyncAction` hook
+(idle → pending → success/error) + `ConsoleAction` component.
+
+### Submit-status readout across the app
+Every user-submit surface now reports status: the earnings purse + Town Crier +
+Game Table (claim/withdraw via `useEarnings.status`), the betting modal
+(pending/result/error), and the Quest Board post (now on `useAsyncAction`). Also
+fixed a leftover `10^10` denomination bug in the betting payout display.
 
 ---
 

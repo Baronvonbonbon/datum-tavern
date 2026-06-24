@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Signer } from "ethers";
+import { Signer, formatEther } from "ethers";
 import { betVsHouse, openP2PGame, GameType, MAX_BET_PAS, GameResult } from "../lib/tavernBetting";
 
 interface Props {
@@ -94,7 +94,7 @@ export function BettingModal({ gameType, signer, onClose }: Props) {
             {result.p1Wins ? "🏆 YOU WIN!" : "💀 The house wins."}
           </p>
           {result.p1Wins && (
-            <p>Payout: {Number(result.payout) / 10 ** 10} PAS</p>
+            <p>Payout: {formatEther(result.payout)} PAS</p>
           )}
           <button className="btn btn--secondary" onClick={onClose}>Close</button>
         </div>

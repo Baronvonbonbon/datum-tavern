@@ -1,6 +1,7 @@
 import { Contract, Signer, parseEther } from "ethers";
 import ABI from "../../abis/TavernBetting.json";
 import { ADDRESSES } from "./addresses";
+import { getReadProvider } from "./pine";
 
 export enum GameType {
   DICE        = 0,
@@ -101,4 +102,39 @@ export async function joinP2PGame(signer: Signer, gameId: bigint): Promise<GameR
 export async function getHouseBalance(signer: Signer): Promise<bigint> {
   const c = getContract(signer);
   return c.houseBalance();
+}
+
+// ── Read-only views (Console) ────────────────────────────────────────────────
+
+function getReadContract() {
+  return getReadProvider().then((p) => new Contract(ADDRESSES.tavernBetting, ABI, p));
+}
+
+export async function getGameCount(): Promise<bigint> {
+  return (await getReadContract()).gameCount();
+}
+
+export async function getHouseBalanceRead(): Promise<bigint> {
+  return (await getReadContract()).houseBalance();
+}
+
+export interface GameInfo {
+  player1: string; player2: string; gameType: number;
+  betAmount: bigint; state: number; createdAt: number; winner: string;
+}
+
+export async function getGame(id: bigint): Promise<GameInfo> {
+  const g = await (await getReadContract()).getGame(id);
+  return {
+    player1: g.player1, player2: g.player2, gameType: Number(g.gameType),
+    betAmount: g.betAmount, state: Number(g.state), createdAt: Number(g.createdAt), winner: g.winner,
+  };
+}
+
+/** Cancel an open P2P game after its join timeout. Returns the tx hash. */
+export async function cancelGame(signer: Signer, id: bigint): Promise<string> {
+  const c = getContract(signer);
+  const tx = await c.cancelGame(id);
+  await tx.wait();
+  return tx.hash;
 }

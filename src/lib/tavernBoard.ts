@@ -43,9 +43,18 @@ export async function fetchRandomMessages(n: number): Promise<BoardMessage[]> {
   return results;
 }
 
-/** Post a message on-chain. Requires a connected wallet signer. */
-export async function postMessage(signer: Signer, text: string): Promise<void> {
+/** Read a single message by index. */
+export async function getMessage(id: number): Promise<BoardMessage> {
+  const provider = await getReadProvider();
+  const c = getContract(provider);
+  const [author, text, postedAt]: [string, string, bigint] = await c.getMessage(id);
+  return { id, author, text, postedAt: Number(postedAt), onChain: true };
+}
+
+/** Post a message on-chain. Requires a connected wallet signer. Returns the tx hash. */
+export async function postMessage(signer: Signer, text: string): Promise<string> {
   const c = getContract(signer);
   const tx = await c.post(text);
   await tx.wait();
+  return tx.hash;
 }

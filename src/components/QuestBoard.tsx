@@ -14,6 +14,7 @@ import { Signer } from "ethers";
 import { fetchRandomMessages, postMessage, BoardMessage } from "../lib/tavernBoard";
 import { pickRandomAd, shouldShowAd, DatumAd } from "../lib/datumContracts";
 import { sampleMockMessages, MockMessage } from "../data/mockMessages";
+import { useAsyncAction } from "../hooks/useAsyncAction";
 
 type Entry = (BoardMessage | MockMessage) & { _ad?: DatumAd };
 
@@ -23,9 +24,9 @@ interface Props {
 
 export function QuestBoard({ signer }: Props) {
   const [entries, setEntries] = useState<Entry[]>(() => sampleMockMessages(6) as Entry[]);
-  const [posting, setPosting] = useState(false);
   const [draft,   setDraft]   = useState("");
   const [loading, setLoading] = useState(false);
+  const post = useAsyncAction<string>();
 
   const pullMessages = useCallback(async () => {
     setLoading(true);
@@ -60,15 +61,12 @@ export function QuestBoard({ signer }: Props) {
 
   const handlePost = useCallback(async () => {
     if (!signer || !draft.trim()) return;
-    setPosting(true);
-    try {
-      await postMessage(signer, draft.trim());
-      setDraft("");
-      await pullMessages();
-    } finally {
-      setPosting(false);
-    }
-  }, [signer, draft, pullMessages]);
+    const ok = await post.run(
+      async () => { const h = await postMessage(signer, draft.trim()); return h; },
+      { pending: "Awaiting signature…", success: (h) => `Posted to the board ✓ (tx ${h.slice(0, 10)}…)` },
+    );
+    if (ok) { setDraft(""); await pullMessages(); }
+  }, [signer, draft, pullMessages, post]);
 
   return (
     <div className="modal quest-board">
@@ -95,9 +93,12 @@ export function QuestBoard({ signer }: Props) {
               value={draft}
               onChange={e => setDraft(e.target.value)}
             />
-            <button className="btn btn--primary" onClick={handlePost} disabled={posting || !draft.trim()}>
-              {posting ? "Posting…" : "Post Notice (sign)"}
+            <button className="btn btn--primary" onClick={handlePost} disabled={post.busy || !draft.trim()}>
+              {post.busy ? "Posting…" : "Post Notice (sign)"}
             </button>
+            {post.phase !== "idle" && (
+              <p className={`quest-board__post-status quest-board__post-status--${post.phase}`}>{post.message}</p>
+            )}
           </div>
         )}
       </div>

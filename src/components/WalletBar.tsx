@@ -5,9 +5,11 @@ import { EarningsPurse } from "./EarningsPurse";
 interface Props {
   wallet: WalletState & { connect: () => void; disconnect: () => void };
   earnings: EarningsState | null;
+  view: "tavern" | "console";
+  onToggleView: () => void;
 }
 
-export function WalletBar({ wallet, earnings }: Props) {
+export function WalletBar({ wallet, earnings, view, onToggleView }: Props) {
   const short = wallet.address
     ? `${wallet.address.slice(0, 6)}…${wallet.address.slice(-4)}`
     : null;
@@ -15,6 +17,9 @@ export function WalletBar({ wallet, earnings }: Props) {
   return (
     <div className="wallet-bar">
       <span className="wallet-bar__brand">⚔ DATUM TAVERN</span>
+      <button className="btn btn--ghost wallet-bar__nav" onClick={onToggleView}>
+        {view === "tavern" ? "⚙ Console" : "🍺 Tavern"}
+      </button>
 
       {wallet.address ? (
         <div className="wallet-bar__info">
