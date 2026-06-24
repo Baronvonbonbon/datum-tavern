@@ -8,15 +8,14 @@
  */
 
 import { useState, useEffect } from "react";
-import { formatEther } from "ethers";
 import { DatumAd } from "../lib/datumContracts";
 import { useDatumCampaigns } from "../hooks/useDatumCampaigns";
 import { useEarningsContext } from "../hooks/earningsContext";
+import { useTab } from "../hooks/tabContext";
 import { ACTION_TYPE } from "../lib/addresses";
 import { OnChainNote } from "./OnChainNote";
 
 const ACCRUE_EVERY_MS = 4000; // one impression every few seconds while viewing
-const MAX_ACCRUED = 50;       // cap before the patron must collect
 
 /** Creative artwork with a graceful fallback when IPFS art is missing/unreachable. */
 function Creative({ ad }: { ad: DatumAd }) {
@@ -39,36 +38,27 @@ function Creative({ ad }: { ad: DatumAd }) {
 
 export function MerchantStall() {
   const { ads, loading, error } = useDatumCampaigns();
-  const [idx,     setIdx]     = useState(0);
-  const [impressions, setImpressions] = useState(0);
+  const [idx, setIdx] = useState(0);
   const earnings = useEarningsContext();
+  const tab = useTab();
 
   const current = ads[idx] ?? null;
 
-  // Reset the impression counter when the featured campaign changes.
-  useEffect(() => { setImpressions(0); }, [idx]);
-
-  // Accrue impressions while a creative is on screen and a wallet is connected.
-  const canEarn = !!earnings && !!current;
+  // Accrue a view to the shared tab while a creative is on screen. Settling
+  // happens at the Barkeep ("Settle the Tab"), which aggregates every zone.
   useEffect(() => {
-    if (!canEarn) return;
+    if (!current || !tab) return;
     const t = setInterval(() => {
-      setImpressions((n) => Math.min(MAX_ACCRUED, n + 1));
+      tab.accrue({ campaignId: current.campaignId, title: current.title || `Campaign #${current.campaignId}`, viewBidWei: current.viewBidWei });
     }, ACCRUE_EVERY_MS);
     return () => clearInterval(t);
-  }, [canEarn, idx]);
+  }, [current, tab]);
 
   const next = () => setIdx(i => (i + 1) % Math.max(1, ads.length));
   const prev = () => setIdx(i => (i - 1 + Math.max(1, ads.length)) % Math.max(1, ads.length));
 
-  const collectViews = async () => {
-    if (!earnings || !current || impressions <= 0) return;
-    const res = await earnings.claim(current.campaignId, ACTION_TYPE.VIEW, BigInt(impressions));
-    if (res.ok) setImpressions(0);
-  };
-
-  // Rough "worth" of the accrued impressions: viewBid is per-1000 (CPM).
-  const viewWorthWei = current ? (current.viewBidWei * BigInt(impressions)) / 1000n : 0n;
+  // This campaign's running tally on the tab.
+  const onTab = current ? (tab?.entries.find((e) => e.campaignId === current.campaignId)?.count ?? 0) : 0;
 
   return (
     <div className="modal merchant-stall">
@@ -111,25 +101,13 @@ export function MerchantStall() {
             </a>
           )}
 
-          {/* ── earn-while-idle meter ── */}
-          {earnings ? (
-            <div className="merchant-stall__earn">
-              <span className="merchant-stall__imp">
-                👁 {impressions} impression{impressions === 1 ? "" : "s"} watched
-                {impressions > 0 && ` · ~${Number(formatEther(viewWorthWei)).toFixed(5)} PAS`}
-              </span>
-              <button
-                className="btn btn--secondary"
-                onClick={collectViews}
-                disabled={earnings.busy || impressions <= 0}
-              >
-                {earnings.busy ? "Collecting…" : "Collect impressions"}
-              </button>
-              {earnings.status && <span className="merchant-stall__earn-status">{earnings.status}</span>}
-            </div>
-          ) : (
-            <p className="hint">Connect a wallet to earn a share for watching.</p>
-          )}
+          {/* ── earn-while-idle meter (accrues to your tab) ── */}
+          <div className="merchant-stall__earn">
+            <span className="merchant-stall__imp">
+              👁 {onTab} impression{onTab === 1 ? "" : "s"} added to your tab
+            </span>
+            <span className="hint">Settle your tab with the 🍺 Barkeep to claim your share.</span>
+          </div>
 
           <div className="merchant-stall__meta">
             <span className="merchant-stall__advertiser">
@@ -153,8 +131,9 @@ export function MerchantStall() {
       <OnChainNote>
         A dedicated Datum ad placement. Creatives are fetched from the campaign's
         on-chain <code>metadataHash</code> (DatumCampaignCreative → IPFS). While the
-        crier is open, impressions accrue; <b>Collect</b> signs an EIP-712 view-claim
-        the relay settles on <code>DatumSettlement</code>, crediting your share to
+        crier is open, impressions accrue to your <b>tab</b>; settle it at the
+        Barkeep, which files EIP-712 view-claims the relay settles on
+        <code>DatumSettlement</code> (gasless), crediting your share to
         <code>PaymentVault</code>. Clicking the CTA files a click-claim too.
       </OnChainNote>
     </div>

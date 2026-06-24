@@ -1,14 +1,18 @@
 /**
- * Barkeep — center-back NPC.
- * Cycles through flavor dialogue; ~1 in AD_INTERVAL lines is a sponsored whisper
- * from an active Datum campaign. The whispers you hear become your "tab" — and
- * you settle the tab (a Datum view-claim) right here for your cut.
+ * Barkeep — center-back NPC and the tavern's settlement hub.
+ *
+ * ~1 in AD_INTERVAL dialogue lines is a sponsored whisper from a Datum campaign
+ * (adds to your tab). "Settle the Tab" lists EVERY unsettled impression claim
+ * accrued across the tavern (Town Crier, Quest Board, Barkeep) and settles each
+ * through the gasless relay path — a view-claim the relay submits, so you only
+ * sign and pay no gas.
  */
 
 import { useState, useCallback } from "react";
 import { formatEther } from "ethers";
-import { pickRandomAd, AD_INTERVAL, DatumAd } from "../lib/datumContracts";
+import { pickRandomAd, AD_INTERVAL } from "../lib/datumContracts";
 import { useEarningsContext } from "../hooks/earningsContext";
+import { useTab } from "../hooks/tabContext";
 import { ACTION_TYPE } from "../lib/addresses";
 import { OnChainNote } from "./OnChainNote";
 
@@ -31,9 +35,8 @@ export function Barkeep() {
   const [line,    setLine]    = useState<string | null>(null);
   const [isAd,    setIsAd]    = useState(false);
   const [adLabel, setAdLabel] = useState("");
-  const [whispers, setWhispers] = useState(0);          // sponsored whispers heard ("your tab")
-  const [tabAd,    setTabAd]    = useState<DatumAd | null>(null); // campaign to settle against
   const earnings = useEarningsContext();
+  const tab = useTab();
 
   const speak = useCallback(async () => {
     _pullIdx++;
@@ -42,8 +45,8 @@ export function Barkeep() {
       if (ad) {
         setIsAd(true);
         setAdLabel(ad.title || ad.advertiser.slice(0, 8) + "…");
-        setWhispers((w) => w + 1);
-        setTabAd(ad);
+        // Heard a whisper → one impression on the tab for that campaign.
+        tab?.accrue({ campaignId: ad.campaignId, title: ad.title || `Campaign #${ad.campaignId}`, viewBidWei: ad.viewBidWei });
         setLine(
           `*leans in and lowers voice* "${ad.title || "A traveller"}" left coin to spread word — ` +
           `that's another mark on yer tab. Settle up when ye like.`
@@ -54,26 +57,31 @@ export function Barkeep() {
     setIsAd(false);
     setAdLabel("");
     setLine(BARKEEP_LINES[Math.floor(Math.random() * BARKEEP_LINES.length)]);
-  }, []);
+  }, [tab]);
 
-  const settleTab = async () => {
-    if (!earnings || !tabAd || whispers <= 0) return;
-    const res = await earnings.claim(tabAd.campaignId, ACTION_TYPE.VIEW, BigInt(whispers));
-    if (res.ok) setWhispers(0);
+  const entries = tab?.entries ?? [];
+  const worthWei = (viewBidWei: bigint, count: number) => (viewBidWei * BigInt(count)) / 1000n;
+  const totalWorthWei = entries.reduce((s, e) => s + worthWei(e.viewBidWei, e.count), 0n);
+
+  // Settle one campaign's impressions via the gasless relay; clear on success.
+  const settle = async (campaignId: bigint, count: number) => {
+    if (!earnings) return;
+    const res = await earnings.claim(campaignId, ACTION_TYPE.VIEW, BigInt(count));
+    if (res.ok) tab?.clear(campaignId);
   };
-
-  // What the tab is worth: viewBid is per-1000 (CPM) × whispers heard.
-  const tabWei = tabAd ? (tabAd.viewBidWei * BigInt(whispers)) / 1000n : 0n;
+  const settleAll = async () => {
+    for (const e of entries) {
+      if (!earnings || earnings.busy) break;
+      await settle(e.campaignId, e.count);
+    }
+  };
 
   return (
     <div className="modal barkeep">
       <h2 className="modal__title">🍺 The Barkeep</h2>
 
       <div className="barkeep__npc">
-        <div className="barkeep__sprite" aria-label="Barkeep NPC">
-          {/* Pixel art barkeep — rendered in CSS */}
-        </div>
-
+        <div className="barkeep__sprite" aria-label="Barkeep NPC" />
         {line && (
           <div className={`barkeep__bubble ${isAd ? "barkeep__bubble--sponsored" : ""}`}>
             {isAd && <span className="barkeep__whisper-tag">📣 {adLabel}</span>}
@@ -86,34 +94,58 @@ export function Barkeep() {
         {line ? "Say Something Else" : "Talk to the Barkeep"}
       </button>
 
-      {/* ── Settle the Tab: a tavern-level Datum claim ── */}
+      {/* ── Settle the Tab: every unsettled impression claim, gasless ── */}
       <div className="barkeep__tab">
-        <span className="barkeep__tab-line">
-          🧾 Your tab: <b>{whispers}</b> whisper{whispers === 1 ? "" : "s"} heard
-          {whispers > 0 && ` · worth ~${Number(formatEther(tabWei)).toFixed(5)} PAS`}
-        </span>
-        {earnings ? (
-          <button
-            className="btn btn--primary"
-            onClick={settleTab}
-            disabled={earnings.busy || whispers <= 0}
-            title="Settle your tab — claim your cut for the sponsored whispers you've heard"
-          >
-            {earnings.busy ? "Squaring up…" : "💰 Settle the Tab"}
-          </button>
+        <div className="barkeep__tab-head">
+          <span>🧾 Your Tab</span>
+          {entries.length > 0 && (
+            <span className="barkeep__tab-total">
+              {tab?.total} impression{tab?.total === 1 ? "" : "s"} · ~{Number(formatEther(totalWorthWei)).toFixed(5)} PAS
+            </span>
+          )}
+        </div>
+
+        {entries.length === 0 ? (
+          <p className="hint">No impressions yet — watch the Town Crier, pull the Quest Board, or chat for whispers, then settle here.</p>
         ) : (
-          <span className="hint">Connect a wallet to settle your tab for coin.</span>
+          <>
+            <ul className="barkeep__tab-list">
+              {entries.map((e) => (
+                <li key={e.campaignId.toString()} className="barkeep__tab-row">
+                  <span className="barkeep__tab-camp">
+                    {e.title} <span className="barkeep__tab-cid">#{e.campaignId.toString()}</span>
+                  </span>
+                  <span className="barkeep__tab-cnt">
+                    {e.count} × · ~{Number(formatEther(worthWei(e.viewBidWei, e.count))).toFixed(5)} PAS
+                  </span>
+                  <button
+                    className="btn btn--secondary barkeep__tab-settle"
+                    onClick={() => settle(e.campaignId, e.count)}
+                    disabled={!earnings || earnings.busy}
+                  >
+                    Settle
+                  </button>
+                </li>
+              ))}
+            </ul>
+            {earnings ? (
+              <button className="btn btn--primary" onClick={settleAll} disabled={earnings.busy}>
+                {earnings.busy ? "Squaring up…" : "💰 Settle the Whole Tab"}
+              </button>
+            ) : (
+              <span className="hint">Connect a wallet to settle your tab for coin.</span>
+            )}
+            {earnings?.status && <span className="barkeep__tab-status">{earnings.status}</span>}
+          </>
         )}
-        {earnings?.status && <span className="barkeep__tab-status">{earnings.status}</span>}
       </div>
 
       <OnChainNote>
-        Conversational placement: ~every third line is a "whispered" sponsorship
-        from an active Datum campaign, clearly tagged. The whispers tally your
-        <b> tab</b>; <b>Settle the Tab</b> files a Datum view-claim for that many
-        impressions — the relay settles it on <code>DatumSettlement</code> and
-        your revenue share lands in <code>PaymentVault</code> (collect it in the
-        wallet bar). The dialogue carries the ad instead of an interstitial.
+        The Barkeep is the tavern's settlement hub. Every ad surface — Town Crier,
+        Quest Board, and these whispers — adds impressions to a shared <b>tab</b>.
+        Each row is one campaign's unsettled views; <b>Settle</b> files an EIP-712
+        view-claim the relay submits via <code>DatumRelay.settleClaimsFor</code>
+        (gasless — you only sign), crediting your share to <code>PaymentVault</code>.
       </OnChainNote>
     </div>
   );

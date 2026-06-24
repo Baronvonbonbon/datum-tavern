@@ -5,6 +5,7 @@ import { WalletBar }   from "./components/WalletBar";
 import { useWallet }   from "./hooks/useWallet";
 import { useEarnings } from "./hooks/useEarnings";
 import { EarningsProvider } from "./hooks/earningsContext";
+import { TabProvider } from "./hooks/tabContext";
 
 type View = "tavern" | "console";
 
@@ -15,6 +16,7 @@ export default function App() {
 
   return (
     <EarningsProvider value={earnings}>
+      <TabProvider>
       <div className="app">
         {view === "tavern"
           ? <TavernScene signer={wallet.signer} />
@@ -26,6 +28,7 @@ export default function App() {
           onToggleView={() => setView((v) => (v === "tavern" ? "console" : "tavern"))}
         />
       </div>
+      </TabProvider>
     </EarningsProvider>
   );
 }

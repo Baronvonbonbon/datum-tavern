@@ -15,6 +15,7 @@ import { fetchRandomMessages, postMessage, BoardMessage } from "../lib/tavernBoa
 import { pickRandomAd, shouldShowAd, DatumAd } from "../lib/datumContracts";
 import { sampleMockMessages, MockMessage } from "../data/mockMessages";
 import { useAsyncAction } from "../hooks/useAsyncAction";
+import { useTab } from "../hooks/tabContext";
 import { OnChainNote } from "./OnChainNote";
 
 type Entry = (BoardMessage | MockMessage) & { _ad?: DatumAd };
@@ -28,6 +29,7 @@ export function QuestBoard({ signer }: Props) {
   const [draft,   setDraft]   = useState("");
   const [loading, setLoading] = useState(false);
   const post = useAsyncAction<string>();
+  const tab = useTab();
 
   const pullMessages = useCallback(async () => {
     setLoading(true);
@@ -43,6 +45,8 @@ export function QuestBoard({ signer }: Props) {
       if (shouldShowAd()) {
         const ad = await pickRandomAd();
         if (ad) {
+          // A sponsored notice was shown → one impression on your tab.
+          tab?.accrue({ campaignId: ad.campaignId, title: ad.title || `Campaign #${ad.campaignId}`, viewBidWei: ad.viewBidWei });
           // Insert ad at position 2 (non-intrusive)
           const sponsored: Entry = {
             id:      `ad-${ad.campaignId}`,

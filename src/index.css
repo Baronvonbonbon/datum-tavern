@@ -761,3 +761,13 @@ body {
 .barkeep__tab-line { color: var(--col-parchment); font-size: 9px; }
 .barkeep__tab-status { color: var(--col-gold); font-size: 8px; }
 /* build 2026-06-24.1 */
+
+/* ── Barkeep tab list ────────────────────────────────────────────────────────── */
+.barkeep__tab-head { display: flex; justify-content: space-between; align-items: baseline; color: var(--col-gold); font-size: 9px; margin-bottom: 6px; }
+.barkeep__tab-total { color: var(--col-parchment); font-size: 8px; }
+.barkeep__tab-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+.barkeep__tab-row { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.22); border-radius: 4px; padding: 6px 8px; }
+.barkeep__tab-camp { flex: 1; color: var(--col-text); font-size: 10px; font-family: var(--font-serif); }
+.barkeep__tab-cid { color: var(--col-text-dim); font-size: 9px; }
+.barkeep__tab-cnt { color: var(--col-parchment); font-size: 9px; white-space: nowrap; }
+.barkeep__tab-settle { font-size: 7px; padding: 4px 8px; }
