@@ -15,6 +15,7 @@ import { BettingModal } from "./BettingModal";
 import { useDatumCampaigns } from "../hooks/useDatumCampaigns";
 import { useEarningsContext } from "../hooks/earningsContext";
 import { ACTION_TYPE } from "../lib/addresses";
+import { OnChainNote } from "./OnChainNote";
 
 const GAMES = [
   { id: GameType.DICE,        label: "🎲 Dice Roll",     component: DiceRoll     },
@@ -108,6 +109,14 @@ export function GameTable({ signer }: Props) {
           onClose={() => setBetting(false)}
         />
       )}
+
+      <OnChainNote>
+        Two separate economies: <b>wagers</b> use your own PAS via
+        <code>TavernBetting</code> (independent of Datum). A <b>sponsored action</b>
+        settles a Datum action-claim — the relay's verifier attests it
+        (<code>/action-attest</code>), and your reward share lands in
+        <code>PaymentVault</code>. Gameplay and ads stay cleanly separated.
+      </OnChainNote>
     </div>
   );
 }

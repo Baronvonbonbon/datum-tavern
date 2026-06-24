@@ -197,8 +197,7 @@ claims were rejected (reason 22) protocol-wide. The owner called
 ### Notes
 - Client rates (`CLAIM_RATE_WEI`) must stay ≤ the seeded pot rates (click 0.01,
   action 0.05 PAS).
-- The relay runs manually (`node relay-bot.mjs`), not under systemd — it won't
-  survive a reboot. Use `relay-bot.example/systemd/datum-relay.service` for persistence.
+- The relay runs as a systemd user service (see "Relay persistence" below).
 
 ### Still operator-run
 8. Deploy `TavernBoard` + `TavernBetting` to Paseo (`npm run deploy`), fill their
@@ -228,10 +227,23 @@ fixed a leftover `10^10` denomination bug in the betting payout display.
 
 ---
 
-## Phase 4 — Polish
+## Phase 4 — Polish ✅ DONE
 
-10. Loading/empty/error states, IPFS image fallbacks, and a per-zone "what just
-    happened on-chain" explainer — the actual tech-demo takeaway.
+- **Per-zone on-chain explainer** (`OnChainNote`, collapsible) in all four zones —
+  names the integration pattern + contracts so a visitor sees what happened
+  on-chain. The actual tech-demo takeaway.
+- **IPFS image fallback**: the Town Crier renders a parchment title-card when a
+  creative has no image or the gateway is unreachable (instead of a blank).
+- **Error states**: `useDatumCampaigns` now surfaces a chain-read error; the
+  Town Crier shows a clear "couldn't read the chain" message vs. an empty board.
+- Loading states retained.
+
+## Relay persistence ✅ DONE
+The live relay runs as a **systemd user service** (`~/.config/systemd/user/datum-relay.service`),
+`enabled` with user-linger on, so it restarts on failure and survives reboot/logout.
+Manage with `systemctl --user {status,restart,stop} datum-relay` and
+`journalctl --user -u datum-relay -f`. (It runs `relay-bot/relay-bot.mjs`, the
+gitignored live file; the canonical equivalent is `relay-bot.example`.)
 
 ---
 

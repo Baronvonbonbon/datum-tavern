@@ -15,6 +15,7 @@ import { fetchRandomMessages, postMessage, BoardMessage } from "../lib/tavernBoa
 import { pickRandomAd, shouldShowAd, DatumAd } from "../lib/datumContracts";
 import { sampleMockMessages, MockMessage } from "../data/mockMessages";
 import { useAsyncAction } from "../hooks/useAsyncAction";
+import { OnChainNote } from "./OnChainNote";
 
 type Entry = (BoardMessage | MockMessage) & { _ad?: DatumAd };
 
@@ -102,6 +103,13 @@ export function QuestBoard({ signer }: Props) {
           </div>
         )}
       </div>
+
+      <OnChainNote>
+        Notices live on-chain (<code>TavernBoard</code>) mixed with local flavor.
+        Every few pulls a <b>sponsored</b> notice is woven in — a real Datum
+        campaign creative for this tavern, resolved from IPFS. It reads as just
+        another quest, which is the point: native, non-intrusive placement.
+      </OnChainNote>
     </div>
   );
 }

@@ -6,6 +6,7 @@
 
 import { useState, useCallback } from "react";
 import { pickRandomAd, AD_INTERVAL } from "../lib/datumContracts";
+import { OnChainNote } from "./OnChainNote";
 
 const BARKEEP_LINES = [
   "Storm's comin' from the north. Best stay another night.",
@@ -66,6 +67,12 @@ export function Barkeep() {
       <button className="btn btn--secondary" onClick={speak}>
         {line ? "Say Something Else" : "Talk to the Barkeep"}
       </button>
+
+      <OnChainNote>
+        Conversational placement: roughly every third line is a "whispered"
+        sponsorship drawn from an active Datum campaign for this tavern, tagged so
+        it's clearly marked. The NPC dialogue carries the ad instead of an interstitial.
+      </OnChainNote>
     </div>
   );
 }

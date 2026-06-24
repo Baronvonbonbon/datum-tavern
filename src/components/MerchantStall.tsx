@@ -9,26 +9,39 @@
 
 import { useState, useEffect } from "react";
 import { formatEther } from "ethers";
-import { fetchTavernAds, DatumAd } from "../lib/datumContracts";
+import { DatumAd } from "../lib/datumContracts";
+import { useDatumCampaigns } from "../hooks/useDatumCampaigns";
 import { useEarningsContext } from "../hooks/earningsContext";
 import { ACTION_TYPE } from "../lib/addresses";
+import { OnChainNote } from "./OnChainNote";
 
 const ACCRUE_EVERY_MS = 4000; // one impression every few seconds while viewing
 const MAX_ACCRUED = 50;       // cap before the patron must collect
 
+/** Creative artwork with a graceful fallback when IPFS art is missing/unreachable. */
+function Creative({ ad }: { ad: DatumAd }) {
+  const [broken, setBroken] = useState(false);
+  if (ad.imageUrl && !broken) {
+    return (
+      <div className="merchant-stall__creative">
+        <img src={ad.imageUrl} alt={ad.title || "Sponsored creative"} onError={() => setBroken(true)} />
+      </div>
+    );
+  }
+  // Fallback: a parchment card from the on-chain text (no image / IPFS down).
+  return (
+    <div className="merchant-stall__creative merchant-stall__creative--fallback">
+      <span className="merchant-stall__fallback-cat">SPONSORED</span>
+      <span className="merchant-stall__fallback-title">{ad.title || `Campaign #${ad.campaignId}`}</span>
+    </div>
+  );
+}
+
 export function MerchantStall() {
-  const [ads,     setAds]     = useState<DatumAd[]>([]);
+  const { ads, loading, error } = useDatumCampaigns();
   const [idx,     setIdx]     = useState(0);
-  const [loading, setLoading] = useState(true);
   const [impressions, setImpressions] = useState(0);
   const earnings = useEarningsContext();
-
-  useEffect(() => {
-    fetchTavernAds()
-      .then(setAds)
-      .catch(() => setAds([]))
-      .finally(() => setLoading(false));
-  }, []);
 
   const current = ads[idx] ?? null;
 
@@ -64,7 +77,14 @@ export function MerchantStall() {
 
       {loading && <p className="loading-text">Consulting the ledger…</p>}
 
-      {!loading && ads.length === 0 && (
+      {!loading && error && (
+        <div className="merchant-stall__empty">
+          <p className="merchant-stall__error">⚠ Couldn't read the chain.</p>
+          <p className="hint">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && ads.length === 0 && (
         <div className="merchant-stall__empty">
           <p>The crier has no announcements today.</p>
           <p className="hint">Advertise here by creating a campaign on the Datum Protocol.</p>
@@ -73,15 +93,7 @@ export function MerchantStall() {
 
       {!loading && current && (
         <div className="merchant-stall__ad">
-          {current.imageUrl && (
-            <div className="merchant-stall__creative">
-              <img
-                src={current.imageUrl}
-                alt={current.title || "Sponsored creative"}
-                onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-            </div>
-          )}
+          <Creative ad={current} />
 
           {current.title && <h3 className="merchant-stall__headline">{current.title}</h3>}
           {current.body && <p className="merchant-stall__body">{current.body}</p>}
@@ -137,6 +149,14 @@ export function MerchantStall() {
           )}
         </div>
       )}
+
+      <OnChainNote>
+        A dedicated Datum ad placement. Creatives are fetched from the campaign's
+        on-chain <code>metadataHash</code> (DatumCampaignCreative → IPFS). While the
+        crier is open, impressions accrue; <b>Collect</b> signs an EIP-712 view-claim
+        the relay settles on <code>DatumSettlement</code>, crediting your share to
+        <code>PaymentVault</code>. Clicking the CTA files a click-claim too.
+      </OnChainNote>
     </div>
   );
 }
