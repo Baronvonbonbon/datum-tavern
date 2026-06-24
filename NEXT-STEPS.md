@@ -171,11 +171,11 @@ The canonical relay (`datum/relay-bot.example`) was extended:
   nonce, eager-flushes) so the claim can reference the exact session.
 - New `POST /action-attest` + `ACTION_VERIFIER_KEY` env → signs `computedHash`.
 
-### Live verification (2026-06-24)
+### Live verification (2026-06-24) — all three paths settle ✅
 Seeded campaigns #85–#89 (publisher `0x749aC2…`) and tested end-to-end on Paseo:
-- **VIEW** ✅ settles + credits (0.0045 PAS for 10 views — 1 PAS CPM, −40% take, ×75% user share).
-- **ACTION** ✅ settles + credits (0.0225 PAS — relay `/action-attest` signs with the verifier key).
-- **CLICK** ⏳ session records on-chain, but the claim is rejected (reason 22) because the **shared `DatumClaimValidator.clickRegistry` is unset** — see below.
+- **VIEW** ✅ 0.0045 PAS for 10 views (1 PAS CPM, −40% take, ×75% user share).
+- **CLICK** ✅ 0.0045 PAS (relay `/click` records the session; claim binds `clickSessionHash`).
+- **ACTION** ✅ 0.0225 PAS (relay `/action-attest` signs with the verifier key).
 
 Hard-won settlement gotchas (all now handled):
 - The relay path (`settleClaimsFor`) checks the publisher cosig against the
@@ -189,11 +189,10 @@ Hard-won settlement gotchas (all now handled):
   only auto-signs a publisher cosig when it IS the campaign publisher, and
   `ClickRegistry.setRelay(botEOA)` was called so it can record clicks.
 
-### Remaining to enable CLICK (one owner action)
-`DatumClaimValidator.clickRegistry` is `address(0)` on the live deploy (never
-wired). Until the owner calls `claimValidator.setClickRegistry(<clickRegistry>)`,
-every click claim is rejected (reason 22) protocol-wide. View + action are
-unaffected. (This is a core-contract change, so it needs explicit go-ahead.)
+### One-time owner wiring done (2026-06-24)
+`DatumClaimValidator.clickRegistry` was `address(0)` on the live deploy, so click
+claims were rejected (reason 22) protocol-wide. The owner called
+`claimValidator.setClickRegistry(0x5369…)` — clicks now settle.
 
 ### Notes
 - Client rates (`CLAIM_RATE_WEI`) must stay ≤ the seeded pot rates (click 0.01,
