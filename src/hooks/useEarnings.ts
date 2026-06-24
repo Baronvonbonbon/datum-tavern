@@ -87,6 +87,7 @@ export function useEarnings(signer: Signer | null, address: string | null): Earn
   // you the coin"). Works with a zero-PAS wallet — true gasless onboarding.
   const cashOut = useCallback(async () => {
     if (!signer || !addrRef.current) return;
+    if (balanceWei <= 0n) { setStatus("nothing to collect — already cashed out"); return; }
     setBusy(true);
     setStatus("Awaiting signature…");
     try {
