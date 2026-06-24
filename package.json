@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:pages": "tsc && vite build --base=/datum-tavern/",
     "preview": "vite preview",
     "deploy": "hardhat run scripts/deploy.ts --network paseo",
     "seed": "node scripts/seed-tavern.mjs"

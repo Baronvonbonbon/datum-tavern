@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+# Builds the static SPA and publishes it to GitHub Pages on every push to master.
+# The app is fully client-side — it talks to Paseo, the relay, and IPFS straight
+# from the browser — so a static host is all it needs.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; cancel superseded runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # This repo → ./datum-tavern ; the pine-rpc sibling → ./pine-rpc so the
+      # `file:../pine-rpc` dependency resolves exactly like it does locally.
+      - name: Checkout datum-tavern
+        uses: actions/checkout@v4
+        with:
+          path: datum-tavern
+      - name: Checkout pine-rpc
+        uses: actions/checkout@v4
+        with:
+          repository: Baronvonbonbon/pine-rpc
+          path: pine-rpc
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # pine-rpc ships no built dist in git, so build it before the tavern install.
+      - name: Build pine-rpc
+        working-directory: pine-rpc
+        run: npm install && npm run build
+
+      - name: Build tavern (GitHub Pages base)
+        working-directory: datum-tavern
+        run: npm install && npm run build:pages
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: datum-tavern/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
