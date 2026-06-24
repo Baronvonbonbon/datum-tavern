@@ -81,7 +81,7 @@ const iPub = new Interface([
   "function setRelaySigner(address signer)",
   "function setProfile(bytes32 profileHash)",
   "function relaySigner(address) view returns (address)",
-  "function getPublisher(address) view returns (tuple(address addr,uint256 takeRateBps,bool registered))",
+  "function isRegisteredWithRate(address) view returns (bool, uint16)",
 ]);
 const iCamp = new Interface([
   "function nextCampaignId() view returns (uint256)",
@@ -92,6 +92,11 @@ const iCamp = new Interface([
 ]);
 const iCreative = new Interface(["function setMetadata(uint256 campaignId, bytes32 metadataHash)"]);
 const iRouter   = new Interface(["function adminActivateCampaign(uint256 campaignId)"]);
+const iStake    = new Interface([
+  "function stake() payable",
+  "function staked(address) view returns (uint256)",
+  "function requiredStake(address) view returns (uint256)",
+]);
 
 const STATUS = ["Pending", "Active", "Paused", "Completed", "Terminated", "Expired"];
 
@@ -151,11 +156,17 @@ async function read(to, iface, fn, args) {
   const raw = await withRetry(() => p.call({ to, data: iface.encodeFunctionData(fn, args) }), `call ${fn}`);
   return iface.decodeFunctionResult(fn, raw);
 }
+// Jitter the gasPrice per attempt: Paseo's tx-pool "temporarily bans" a tx hash
+// after a failed submit, so an identical resubmission (same nonce/params) stays
+// banned. A unique gasPrice yields a fresh hash on every run/retry.
+function jitterGas() {
+  return { ...GAS, gasPrice: GAS.gasPrice + BigInt(Math.floor(Math.random() * 1_000_000)) };
+}
 async function send(signer, to, iface, fn, args, value = 0n) {
   const data = iface.encodeFunctionData(fn, args);
   const nonce = await txCount(signer.address);
-  try { await signer.sendTransaction({ to, data, value, ...GAS, nonce }); } catch { /* verify via nonce */ }
-  for (let i = 0; i < 90; i++) { if (await txCount(signer.address) > nonce) return; await sleep(2000); }
+  try { await signer.sendTransaction({ to, data, value, ...jitterGas(), nonce }); } catch { /* verify via nonce */ }
+  for (let i = 0; i < 120; i++) { if (await txCount(signer.address) > nonce) return; await sleep(2000); }
   throw new Error("nonce stuck: " + fn);
 }
 async function fund(to, amountWei, label) {
@@ -164,8 +175,8 @@ async function fund(to, amountWei, label) {
   const topUp = amountWei - bal;
   console.log(`  funding ${label} with ${formatEther(topUp)} PAS from Alice…`);
   const nonce = await txCount(alice.address);
-  try { await alice.sendTransaction({ to, value: topUp, ...GAS, nonce }); } catch { /* verify via balance */ }
-  for (let i = 0; i < 90; i++) { if (await withRetry(() => p.getBalance(to), "bal") >= amountWei) return; await sleep(2000); }
+  try { await alice.sendTransaction({ to, value: topUp, ...jitterGas(), nonce }); } catch { /* verify via balance */ }
+  for (let i = 0; i < 120; i++) { if (await withRetry(() => p.getBalance(to), "bal") >= amountWei) return; await sleep(2000); }
   throw new Error("funding stuck: " + label);
 }
 
@@ -211,15 +222,20 @@ async function main() {
 
   // ── [1] fund actors from Alice ────────────────────────────────────────────
   console.log("[1] funding actors from Alice…");
-  await fund(tavern.address, parseEther("2"), "tavern publisher (gas)");
-  // Bob needs budget for N campaigns + headroom for gas.
-  await fund(bob.address, perCampaign * BigInt(N) + parseEther("5"), "advertiser Bob (budgets + gas)");
+  // Each tx reserves gasLimit×gasPrice (~900 PAS) as max-fee upfront (refunded
+  // minus actual gas), so the publisher needs that much spare to send any tx —
+  // 2 PAS is not enough. Fund it well above one max-fee reservation.
+  const maxFeePerTx = GAS.gasLimit * GAS.gasPrice; // ~900 PAS
+  // Cover one max-fee reservation + the publisher stake (+ headroom) it locks.
+  await fund(tavern.address, maxFeePerTx + parseEther(process.env.STAKE_HEADROOM_PAS || "50") + parseEther("60"), "tavern publisher (gas + stake)");
+  // Bob needs the per-campaign budgets PLUS one max-fee reservation in spare.
+  await fund(bob.address, perCampaign * BigInt(N) + maxFeePerTx + parseEther("10"), "advertiser Bob (budgets + gas)");
 
   // ── [2] register tavern publisher + delegate relaySigner → relay signer ───
   console.log("\n[2] registering tavern publisher…");
-  const pub = await read(A.publishers, iPub, "getPublisher", [tavern.address]);
-  if (pub[0].registered) {
-    console.log(`    already registered (take ${Number(pub[0].takeRateBps) / 100}%)`);
+  const [isReg, curRate] = await read(A.publishers, iPub, "isRegisteredWithRate", [tavern.address]);
+  if (isReg) {
+    console.log(`    already registered (take ${Number(curRate) / 100}%)`);
   } else {
     await send(tavern, A.publishers, iPub, "registerPublisher", [PUBLISHER_TAKE_BPS]);
     console.log(`    registered with take ${PUBLISHER_TAKE_BPS / 100}%`);
@@ -231,6 +247,21 @@ async function main() {
     await send(tavern, A.publishers, iPub, "setRelaySigner", [RELAY_SIGNER]);
     const now = (await read(A.publishers, iPub, "relaySigner", [tavern.address]))[0];
     console.log(`    relaySigner → ${now}  ${now.toLowerCase() === RELAY_SIGNER.toLowerCase() ? "✓" : "✗ FAILED"}`);
+  }
+
+  // ── [2b] stake the publisher (Settlement rejects under-staked publishers,
+  // reason 15). requiredStake = base + cumulativeImpressions × perImp and GROWS
+  // as impressions settle, so stake with headroom — staking exactly the current
+  // requiredStake leaves it under-staked after the first settled claim.
+  if (A.publisherStake) {
+    const req = BigInt((await read(A.publisherStake, iStake, "requiredStake", [tavern.address]))[0]);
+    const have = BigInt((await read(A.publisherStake, iStake, "staked", [tavern.address]))[0]);
+    const target = req + parseEther(process.env.STAKE_HEADROOM_PAS || "50");
+    if (have < target) {
+      console.log(`    staking ${formatEther(target - have)} PAS (required ${formatEther(req)} + headroom)…`);
+      await send(tavern, A.publisherStake, iStake, "stake", [], target - have);
+    }
+    console.log(`    publisher staked: ${formatEther(BigInt((await read(A.publisherStake, iStake, "staked", [tavern.address]))[0]))} PAS`);
   }
 
   // ── [3] create + fund + describe + activate campaigns ─────────────────────

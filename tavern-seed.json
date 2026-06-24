@@ -1,0 +1,55 @@
+{
+  "at": "2026-06-24T09:45:40.380Z",
+  "chainId": 420420417,
+  "gateway": "https://ipfs-datum.javcon.io/ipfs/",
+  "tavernPublisher": "0x749aC2097B5F12788dA3ee80FF4D017c799E8AdD",
+  "advertiser": "0x8D21a4e6707cE8071fB0e9755124f3FaBfd73778",
+  "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197",
+  "campaigns": [
+    {
+      "cid": 85,
+      "title": "Ironforge Smithy",
+      "category": "Smithing",
+      "svgCid": "QmUiKJ4JnCrrZpQCd1a5wDNh8kNvBEmEPNfoMhPLhgmb2n",
+      "metaCid": "QmQUCruRQYtgFxo2Vp2HUUE3y4y6iatuVCngfUYzZbMEWT",
+      "status": "Active",
+      "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197"
+    },
+    {
+      "cid": 86,
+      "title": "Eastvale Caravan Co.",
+      "category": "Safe Passage",
+      "svgCid": "QmS7EcTo6P64VrrXCoD7TDLac9cGdVKd5qEEk5D9RWoNxv",
+      "metaCid": "QmdCGLtCdUPk4Sp881Y6ABJRWwhoRJCLTcsjpvdApeLbWB",
+      "status": "Active",
+      "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197"
+    },
+    {
+      "cid": 87,
+      "title": "Madame Hex's Apothecary",
+      "category": "Alchemy",
+      "svgCid": "QmV2wi2pRdykQgBgpmb4Y9vg11NVA5SZERhozipKp8bgpK",
+      "metaCid": "QmPKD86NVGYEeunq9f64VwGhfTeLs5FFNJLsBw6QPY3V4c",
+      "status": "Active",
+      "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197"
+    },
+    {
+      "cid": 88,
+      "title": "The Adventurers' Guild",
+      "category": "Recruitment",
+      "svgCid": "QmS9i6ib5VtacgCTo2j1GH1i79LrTgiNuZQh4HtXs4JDGQ",
+      "metaCid": "QmbB2tgmRNJP88i1C9QMtjHZcBZq6Lpm9PqC1LnPcMTDv3",
+      "status": "Active",
+      "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197"
+    },
+    {
+      "cid": 89,
+      "title": "Gilded Tankard Brewery",
+      "category": "Fine Ale",
+      "svgCid": "QmRpwNvFsbYPJcpDvDGjtFqdD9ZwvCpNyuSBoFX5k4VPm7",
+      "metaCid": "QmeEUkyAUSiTcGtAAnSGjc28WrCkec4RpmuCDjAjwo2NMJ",
+      "status": "Active",
+      "relaySigner": "0xD130982DE7f51f0d17eBCeDb88C9714fa77a0197"
+    }
+  ]
+}

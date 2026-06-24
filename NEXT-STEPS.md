@@ -171,12 +171,35 @@ The canonical relay (`datum/relay-bot.example`) was extended:
   nonce, eager-flushes) so the claim can reference the exact session.
 - New `POST /action-attest` + `ACTION_VERIFIER_KEY` env → signs `computedHash`.
 
-### To enable live (operator)
-1. Deploy the updated relay with `ACTION_VERIFIER_KEY` set.
-2. Re-seed with `ACTION_VERIFIER_ADDR` = that key's address (the action pot's
-   `actionVerifier`). View/click pots are unaffected.
-3. Client rates (`CLAIM_RATE_WEI` in `addresses.ts`) must stay ≤ the seeded pot
-   rates (currently equal: click 0.01, action 0.05 PAS).
+### Live verification (2026-06-24)
+Seeded campaigns #85–#89 (publisher `0x749aC2…`) and tested end-to-end on Paseo:
+- **VIEW** ✅ settles + credits (0.0045 PAS for 10 views — 1 PAS CPM, −40% take, ×75% user share).
+- **ACTION** ✅ settles + credits (0.0225 PAS — relay `/action-attest` signs with the verifier key).
+- **CLICK** ⏳ session records on-chain, but the claim is rejected (reason 22) because the **shared `DatumClaimValidator.clickRegistry` is unset** — see below.
+
+Hard-won settlement gotchas (all now handled):
+- The relay path (`settleClaimsFor`) checks the publisher cosig against the
+  campaign **publisher address itself**, NOT `relaySigner`. So the relay must
+  either be the publisher or send an **empty** cosig (assurance-0); the client
+  sends `expectedRelaySigner = address(0)`. (relaySigner only matters on the
+  separate dual-sig path.)
+- Publisher must be **staked** (`DatumPublisherStake`), and `requiredStake`
+  grows with settled impressions — stake with headroom (the seed now does, 50 PAS).
+- The live relay (`relay-bot.mjs`) was extended with `/click` + `/action-attest`,
+  only auto-signs a publisher cosig when it IS the campaign publisher, and
+  `ClickRegistry.setRelay(botEOA)` was called so it can record clicks.
+
+### Remaining to enable CLICK (one owner action)
+`DatumClaimValidator.clickRegistry` is `address(0)` on the live deploy (never
+wired). Until the owner calls `claimValidator.setClickRegistry(<clickRegistry>)`,
+every click claim is rejected (reason 22) protocol-wide. View + action are
+unaffected. (This is a core-contract change, so it needs explicit go-ahead.)
+
+### Notes
+- Client rates (`CLAIM_RATE_WEI`) must stay ≤ the seeded pot rates (click 0.01,
+  action 0.05 PAS).
+- The relay runs manually (`node relay-bot.mjs`), not under systemd — it won't
+  survive a reboot. Use `relay-bot.example/systemd/datum-relay.service` for persistence.
 
 ### Still operator-run
 8. Deploy `TavernBoard` + `TavernBetting` to Paseo (`npm run deploy`), fill their

@@ -168,17 +168,19 @@ export async function submitClaim(
   const read = await getReadProvider();
 
   const settlement = new Contract(ADDRESSES.datumSettlement, SETTLEMENT_ABI, read);
-  const campaigns  = new Contract(ADDRESSES.datumCampaigns,  CAMPAIGNS_ABI,  read);
   const pow        = new Contract(ADDRESSES.datumPowEngine,  POW_ABI,        read);
 
-  const [last, prevHashChain, rateWei, expectedRelaySigner, head, powEnforced] = await Promise.all([
+  const [last, prevHashChain, rateWei, head, powEnforced] = await Promise.all([
     settlement.lastNonce(user, campaignId, actionType).then(BigInt),
     settlement.lastClaimHash(user, campaignId, actionType).then(String),
     rateFor(read, campaignId, actionType),
-    campaigns.getCampaignRelaySigner(campaignId).then(String),
     read.getBlockNumber().then(BigInt),
     pow.enforcePow().then(Boolean).catch(() => true), // fail-closed: assume on
   ]);
+  // address(0): the relay path settles on the user sig alone (publisher cosig
+  // optional at assurance level 0). A non-zero value demands a matching
+  // publisher cosig, which the relay can't produce for a delegated publisher.
+  const expectedRelaySigner = ZERO;
 
   if (rateWei <= 0n) return { ok: false, status: 0, message: "campaign has no rate for this action" };
 

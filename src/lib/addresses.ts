@@ -32,8 +32,9 @@ export const ADDRESSES = {
   datumClickRegistry:    "0x5369a13873Cb9Dc3ad8670b5F357766cfb63d771", // click sessions (relay records, settlement claims)
 
   // ── Demo actors (filled by seed-tavern.ts, Phase 1) ───────────────────────
-  // The tavern's publisher address, registered in DatumPublishers.
-  tavernPublisher:       "0x0000000000000000000000000000000000000000",
+  // Registered in DatumPublishers; seeded 2026-06-24 with campaigns #85–#89,
+  // relaySigner → live relay 0xD130….
+  tavernPublisher:       "0x749aC2097B5F12788dA3ee80FF4D017c799E8AdD",
 } as const;
 
 // ── Network / Paseo Asset Hub ────────────────────────────────────────────────
