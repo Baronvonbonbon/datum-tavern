@@ -32,7 +32,7 @@
   --z-overlay: 100;
   --z-modal:   110;
   --z-walletbar: 200;
-  --build-id: "20260624a"; /* bumps the CSS asset hash per deploy */
+  --build-id: "20260624b"; /* bumps the CSS asset hash per deploy */
 }
 
 /* ── Base ───────────────────────────────────────────────────────────────────── */
