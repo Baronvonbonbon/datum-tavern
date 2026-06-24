@@ -1,8 +1,11 @@
 name: Deploy to GitHub Pages
 
-# Builds the static SPA and publishes it to GitHub Pages on every push to master.
-# The app is fully client-side — it talks to Paseo, the relay, and IPFS straight
-# from the browser — so a static host is all it needs.
+# Builds the static SPA and publishes it to the `gh-pages` branch, which GitHub
+# Pages serves (Settings → Pages → Source: "Deploy from a branch: gh-pages /").
+#
+# We push to a branch (peaceiris) rather than use actions/deploy-pages, whose
+# Pages-deployment API step is prone to "Timeout reached, aborting" and can
+# leave the site serving an index.html whose hashed assets 404.
 
 on:
   push:
@@ -10,36 +13,24 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write   # to push the gh-pages branch
 
-# One deploy at a time. Do NOT cancel in-progress runs — cancelling a deploy
-# mid-flight leaves Pages serving an index.html whose hashed assets 404.
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: false   # never cancel a deploy mid-flight
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Build (GitHub Pages base)
-        run: npm install && npm run build:pages
-      - uses: actions/upload-pages-artifact@v3
+      - run: npm install && npm run build:pages
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          # peaceiris adds .nojekyll automatically (Jekyll stays off).
