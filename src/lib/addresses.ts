@@ -53,14 +53,15 @@ export const ACTION_TYPE = {
   ACTION: 2, // completed a sponsored in-game action
 } as const;
 
-// Paseo's pallet-revive eth-rpc doesn't do EIP-1559 fee estimation cleanly, so
-// browser wallets fail with "cannot estimate fee". Send LEGACY txs with an
-// explicit gasPrice + a generous gasLimit (actual usage is tiny — e.g. a board
-// post is ~13k gas / 0.013 PAS; the limit is just the max-fee reservation).
+// Paseo Asset Hub advertises EIP-1559, and wallets (esp. Nova) hang trying to
+// estimate the fee for a bare tx — and forcing a legacy (type:0) tx makes it
+// worse. So we hand the wallet a fully-specified EIP-1559 tx: explicit gasLimit
+// (skips gas estimation; actual usage is ~16k) + maxFeePerGas / maxPriorityFee
+// (skips fee estimation). The chain reports ~2e12 maxFeePerGas; priority is 0.
 export const PASEO_TX = {
-  gasLimit: 5_000_000n,
-  gasPrice: 1_000_000_000_000n,
-  type: 0 as const,
+  gasLimit: 1_000_000n,
+  maxFeePerGas: 2_000_000_000_000n,
+  maxPriorityFeePerGas: 0n,
 };
 
 // Datum relay endpoint (user-signed claims → POST /relay/submit). The relay
