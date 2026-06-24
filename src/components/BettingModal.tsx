@@ -3,9 +3,9 @@
  * Shown on top of a game component when the user chooses to wager.
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Signer, formatEther } from "ethers";
-import { betVsHouse, openP2PGame, GameType, MAX_BET_PAS, GameResult } from "../lib/tavernBetting";
+import { betVsHouse, openP2PGame, getHouseBalanceRead, GameType, MAX_BET_PAS, GameResult } from "../lib/tavernBetting";
 
 interface Props {
   gameType: GameType;
@@ -22,11 +22,18 @@ export function BettingModal({ gameType, signer, onClose }: Props) {
   const [result,  setResult]  = useState<GameResult | null>(null);
   const [error,   setError]   = useState<string | null>(null);
   const [p2pId,   setP2pId]   = useState<bigint | null>(null);
+  const [housePas, setHousePas] = useState<number | null>(null);
 
   const gameName = GameType[gameType].replace("_", " ");
 
+  // The house must cover 2× a vs-house bet, so cap vs-house bets at houseBalance/2.
+  useEffect(() => { getHouseBalanceRead().then((b) => setHousePas(Number(formatEther(b)))).catch(() => {}); }, []);
+  const maxVsHouse = housePas != null ? Math.min(MAX_BET_PAS, Math.floor(housePas / 2)) : MAX_BET_PAS;
+  const maxBet = mode === "vsHouse" ? maxVsHouse : MAX_BET_PAS;
+  const betTooBig = bet > maxBet;
+
   const handleBet = async () => {
-    if (!signer) return;
+    if (!signer || betTooBig) return;
     setPending(true);
     setError(null);
     setResult(null);
@@ -68,19 +75,23 @@ export function BettingModal({ gameType, signer, onClose }: Props) {
               <input
                 type="number"
                 min={1}
-                max={MAX_BET_PAS}
+                max={maxBet}
                 value={bet}
                 onChange={e => setBet(Number(e.target.value))}
               />
             </label>
-            <span className="betting-modal__max">max {MAX_BET_PAS} PAS</span>
+            <span className="betting-modal__max">
+              max {maxBet} PAS
+              {mode === "vsHouse" && housePas != null && ` (house holds ${housePas.toFixed(0)})`}
+            </span>
           </div>
 
           {!signer && <p className="betting-modal__warn">Connect a wallet to place bets.</p>}
+          {betTooBig && <p className="betting-modal__error">Max {maxBet} PAS {mode === "vsHouse" ? "— the house can't cover a bigger vs-house wager." : "per bet."}</p>}
           {error   && <p className="betting-modal__error">{error}</p>}
 
           <div className="betting-modal__actions">
-            <button className="btn btn--primary" onClick={handleBet} disabled={pending || !signer}>
+            <button className="btn btn--primary" onClick={handleBet} disabled={pending || !signer || betTooBig}>
               {pending ? "Signing…" : "Place Bet"}
             </button>
             <button className="btn btn--ghost" onClick={onClose}>Cancel</button>
