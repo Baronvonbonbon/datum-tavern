@@ -40,7 +40,19 @@ const CAMPAIGNS_ABI = [
 const VAULT_ABI = [
   "function userBalance(address) view returns (uint256)",
   "function withdrawUser()",
+  "function withdrawNonce(address) view returns (uint256)",
 ];
+
+// EIP-712 for the gasless withdraw (matches DatumPaymentVault.WITHDRAW_AUTH_TYPEHASH).
+const WITHDRAW_TYPES = {
+  WithdrawAuth: [
+    { name: "user",      type: "address" },
+    { name: "recipient", type: "address" },
+    { name: "maxFee",    type: "uint256" },
+    { name: "nonce",     type: "uint256" },
+    { name: "deadline",  type: "uint256" },
+  ],
+};
 const POW_ABI = [
   "function enforcePow() view returns (bool)",
   "function powTargetForUser(address user, uint256 eventCount) view returns (uint256)",
@@ -293,11 +305,51 @@ export async function getUserBalance(user: string): Promise<bigint> {
   return BigInt(await vault.userBalance(user));
 }
 
-/** Withdraw accrued earnings to the user's wallet (MetaMask tx). */
+/** Withdraw accrued earnings to the user's wallet (MetaMask tx, user pays gas). */
 export async function withdrawEarnings(signer: Signer): Promise<void> {
   const vault = new Contract(ADDRESSES.datumPaymentVault, VAULT_ABI, signer);
   const tx = await vault.withdrawUser(PASEO_TX);
   await tx.wait();
+}
+
+/**
+ * Gasless withdraw — "the barkeep floats you the coin." The user signs a
+ * WithdrawAuth (no gas); the relay submits withdrawUserBySig and pays the gas.
+ * maxFee=0 so the relay subsidises gas and the user keeps their full balance.
+ * Enables zero-PAS onboarding: cash out earnings without ever holding gas.
+ */
+export async function withdrawGasless(signer: Signer): Promise<ClaimResult> {
+  const user = await signer.getAddress();
+  const read = await getReadProvider();
+  const vault = new Contract(ADDRESSES.datumPaymentVault, VAULT_ABI, read);
+
+  const [bal, nonce, head] = await Promise.all([
+    vault.userBalance(user).then(BigInt),
+    vault.withdrawNonce(user).then(BigInt),
+    read.getBlockNumber().then(BigInt),
+  ]);
+  if (bal <= 0n) return { ok: false, status: 0, message: "nothing to withdraw" };
+
+  const deadline = head + DEADLINE_WINDOW;
+  const chainId = BigInt((await read.getNetwork()).chainId);
+  const domain = { name: "DatumPaymentVault", version: "1", chainId, verifyingContract: ADDRESSES.datumPaymentVault };
+  const value = { user, recipient: ZERO, maxFee: 0n, nonce, deadline };
+
+  const sig = await signer.signTypedData(domain, WITHDRAW_TYPES, value);
+
+  let res: Response;
+  try {
+    res = await fetch(`${RELAY_URL}/withdraw`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ user, recipient: ZERO, maxFee: "0", deadline: deadline.toString(), sig }),
+    });
+  } catch (e) {
+    return { ok: false, status: 0, message: e instanceof Error ? e.message : "relay unreachable" };
+  }
+  const body = await res.json().catch(() => ({}));
+  if (res.ok) return { ok: true, status: res.status, message: "the barkeep cashed you out 🪙 (gasless)" };
+  return { ok: false, status: res.status, message: body?.error ?? `relay rejected (${res.status})` };
 }
 
 /**

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Signer } from "ethers";
 import {
-  submitClaim, getUserBalance, withdrawEarnings, waitForCredit, ClaimResult,
+  submitClaim, getUserBalance, withdrawEarnings, withdrawGasless, waitForCredit, ClaimResult,
 } from "../lib/datumClaims";
 import { ACTION_TYPE } from "../lib/addresses";
 
@@ -14,6 +14,7 @@ export interface EarningsState {
   refresh: () => void;
   claim: (campaignId: bigint, actionType: ActionType, eventCount: bigint) => Promise<ClaimResult>;
   withdraw: () => Promise<void>;
+  cashOut: () => Promise<void>;
 }
 
 /**
@@ -82,5 +83,30 @@ export function useEarnings(signer: Signer | null, address: string | null): Earn
     }
   }, [signer, refresh]);
 
-  return { balanceWei, busy, status, refresh, claim, withdraw };
+  // Gasless cash-out: sign only; the relay submits + pays gas ("barkeep floats
+  // you the coin"). Works with a zero-PAS wallet — true gasless onboarding.
+  const cashOut = useCallback(async () => {
+    if (!signer || !addrRef.current) return;
+    setBusy(true);
+    setStatus("Awaiting signature…");
+    try {
+      const res = await withdrawGasless(signer);
+      setStatus(res.message);
+      if (res.ok) {
+        // Relay submits; poll until the vault balance drains.
+        for (let i = 0; i < 15; i++) {
+          await new Promise((r) => setTimeout(r, 3000));
+          const b = await getUserBalance(addrRef.current).catch(() => balanceWei);
+          setBalanceWei(b);
+          if (b === 0n) break;
+        }
+      }
+    } catch (e) {
+      setStatus(e instanceof Error ? e.message : "cash-out failed");
+    } finally {
+      setBusy(false);
+    }
+  }, [signer, balanceWei]);
+
+  return { balanceWei, busy, status, refresh, claim, withdraw, cashOut };
 }

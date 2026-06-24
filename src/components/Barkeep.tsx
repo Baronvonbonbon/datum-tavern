@@ -140,12 +140,28 @@ export function Barkeep() {
         )}
       </div>
 
+      {/* ── Gasless cash-out: the barkeep floats you the coin ── */}
+      {earnings && earnings.balanceWei > 0n && (
+        <div className="barkeep__cashout">
+          <span className="barkeep__cashout-line">
+            💰 The barkeep can float you the coin — cash out{" "}
+            <b>{Number(formatEther(earnings.balanceWei)).toFixed(5)} PAS</b> to your wallet, <b>gasless</b>.
+          </span>
+          <button className="btn btn--primary" onClick={() => void earnings.cashOut()} disabled={earnings.busy}>
+            {earnings.busy ? "Counting coin…" : "🪙 Cash Out (gasless)"}
+          </button>
+        </div>
+      )}
+
       <OnChainNote>
         The Barkeep is the tavern's settlement hub. Every ad surface — Town Crier,
         Quest Board, and these whispers — adds impressions to a shared <b>tab</b>.
         Each row is one campaign's unsettled views; <b>Settle</b> files an EIP-712
         view-claim the relay submits via <code>DatumRelay.settleClaimsFor</code>
         (gasless — you only sign), crediting your share to <code>PaymentVault</code>.
+        <b> Cash Out</b> is gasless too: you sign a <code>WithdrawAuth</code> and the
+        relay submits <code>withdrawUserBySig</code> + pays the gas — so a fresh
+        wallet with zero PAS can earn AND cash out without ever holding gas.
       </OnChainNote>
     </div>
   );

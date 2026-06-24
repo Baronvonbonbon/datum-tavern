@@ -17,9 +17,9 @@ export function EarningsPurse({ earnings }: { earnings: EarningsState }) {
       <span className="purse__amount">{pas.toFixed(4)} PAS</span>
       <button
         className="btn btn--ghost purse__withdraw"
-        onClick={() => void earnings.withdraw()}
+        onClick={() => void earnings.cashOut()}
         disabled={earnings.busy || !hasCoin}
-        title="Withdraw earnings to your wallet"
+        title="Cash out to your wallet — gasless (the barkeep floats the fee)"
       >
         {earnings.busy ? "…" : "Collect"}
       </button>

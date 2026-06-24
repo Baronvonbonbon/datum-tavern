@@ -771,3 +771,7 @@ body {
 .barkeep__tab-cid { color: var(--col-text-dim); font-size: 9px; }
 .barkeep__tab-cnt { color: var(--col-parchment); font-size: 9px; white-space: nowrap; }
 .barkeep__tab-settle { font-size: 7px; padding: 4px 8px; }
+
+/* ── Barkeep gasless cash-out ────────────────────────────────────────────────── */
+.barkeep__cashout { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(42,96,50,0.18); border: 1px dashed var(--col-green); border-radius: 4px; }
+.barkeep__cashout-line { color: var(--col-parchment); font-size: 9px; line-height: 1.5; }
