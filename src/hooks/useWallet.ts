@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { BrowserProvider, Signer, formatEther } from "ethers";
 import { getBrowserProvider } from "../lib/pine";
-import { PASEO_CHAIN_ID, PASEO_RPC_URL, PASEO_EXPLORER } from "../lib/addresses";
+import { PASEO_CHAIN_ID, PASEO_RPC_URL, PASEO_RPC_WSS, PASEO_EXPLORER } from "../lib/addresses";
 
 export interface WalletState {
   address:    string | null;
@@ -38,7 +38,8 @@ export function useWallet() {
             chainId: hexChainId,
             chainName: "Paseo Asset Hub",
             nativeCurrency: { name: "Paseo", symbol: "PAS", decimals: 18 },
-            rpcUrls: [PASEO_RPC_URL],
+            // https first (MetaMask), wss too (Nova / Substrate-native wallets).
+            rpcUrls: [PASEO_RPC_URL, PASEO_RPC_WSS],
             blockExplorerUrls: [PASEO_EXPLORER],
           }]);
         }

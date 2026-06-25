@@ -41,6 +41,7 @@ export const ADDRESSES = {
 // Canonical values mirror datum/web/src/shared/networks.ts (polkadotTestnet).
 export const PASEO_CHAIN_ID = 420420417; // 0x1900_0001
 export const PASEO_RPC_URL  = "https://eth-rpc-testnet.polkadot.io/";
+export const PASEO_RPC_WSS  = "wss://eth-rpc-testnet.polkadot.io/"; // Substrate-native wallets (Nova) need WS
 export const PASEO_EXPLORER = "https://blockscout-testnet.polkadot.io/";
 
 // IPFS gateway for resolving creative metadata CIDs.
