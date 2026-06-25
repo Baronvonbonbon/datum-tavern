@@ -813,3 +813,18 @@ body {
 /* ── Permanent Datum link in the footer bar ──────────────────────────────────── */
 .wallet-bar__datum { color: var(--col-gold); font-size: 8px; text-decoration: none; }
 .wallet-bar__datum:hover { color: var(--col-amber); text-decoration: underline; }
+
+/* ── "What's all this?" trigger + explainer ──────────────────────────────────── */
+.whats-this-btn {
+  position: absolute; top: 10px; left: 10px; z-index: var(--z-hotspot);
+  background: rgba(0,0,0,.5); border: 2px solid var(--col-gold); color: var(--col-gold);
+  font-family: var(--font-px); font-size: 8px; padding: 6px 10px; border-radius: 4px; cursor: pointer;
+  text-shadow: 0 1px 2px #000;
+}
+.whats-this-btn:hover { background: rgba(240,192,64,.2); }
+
+.whats-this__lead { font-family: var(--font-serif); font-size: 13px; line-height: 1.6; color: var(--col-parchment); margin-bottom: 14px; }
+.whats-this__sec { margin-bottom: 14px; }
+.whats-this__sec h3 { font-family: var(--font-px); font-size: 9px; color: var(--col-amber); margin-bottom: 6px; }
+.whats-this__sec p { font-family: var(--font-serif); font-size: 12px; line-height: 1.6; color: var(--col-text); }
+.whats-this__cta { display: inline-block; margin-top: 6px; font-size: 8px; text-decoration: none; }

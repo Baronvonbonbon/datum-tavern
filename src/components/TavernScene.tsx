@@ -11,8 +11,9 @@ import { QuestBoard }    from "./QuestBoard";
 import { Barkeep }       from "./Barkeep";
 import { MerchantStall } from "./MerchantStall";
 import { GameTable }     from "./GameTable";
+import { WhatsThis }     from "./WhatsThis";
 
-type Zone = "board" | "barkeep" | "merchant" | "games" | null;
+type Zone = "board" | "barkeep" | "merchant" | "games" | "about" | null;
 
 interface Props {
   signer: Signer | null;
@@ -27,6 +28,11 @@ export function TavernScene({ signer, onActivity }: Props) {
 
   return (
     <div className="tavern-scene">
+      {/* ── "What's all this?" explainer trigger (always visible) ── */}
+      <button className="whats-this-btn" onClick={() => open("about")}>
+        ❓ What's all this?
+      </button>
+
       {/* ── Background layers ── */}
       <div className="tavern-bg">
         <div className="tavern-bg__floor" />
@@ -82,6 +88,7 @@ export function TavernScene({ signer, onActivity }: Props) {
             {activeZone === "barkeep"  && <Barkeep />}
             {activeZone === "merchant" && <MerchantStall />}
             {activeZone === "games"    && <GameTable     signer={signer} onActivity={onActivity} />}
+            {activeZone === "about"    && <WhatsThis />}
           </div>
         </div>
       )}
