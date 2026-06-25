@@ -923,3 +923,60 @@ body {
   content: "💪"; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
   font-size: 14px; z-index: 1; filter: drop-shadow(0 1px 1px #000);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SECTION 4 — UI CHROME POLISH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Modal panel as a framed wooden board. */
+.modal-wrap {
+  background: linear-gradient(var(--col-wall), #20130a);
+  border: 4px solid var(--col-wood);
+  box-shadow: 0 0 0 2px #2a1808, 0 0 40px rgba(200,134,10,.3), inset 0 0 0 2px rgba(240,192,64,.12);
+}
+
+/* Beveled, tactile buttons. */
+.btn--primary   { background: linear-gradient(#e0a020, #c8860a); box-shadow: 0 3px 0 #8a5a08, inset 0 1px 0 rgba(255,255,255,.3); }
+.btn--primary:hover:not(:disabled)   { background: linear-gradient(#f0c040, #d89818); }
+.btn--primary:active:not(:disabled)  { transform: translateY(2px); box-shadow: 0 1px 0 #8a5a08; }
+.btn--secondary { background: linear-gradient(#5c3317, #432410); box-shadow: 0 3px 0 #241206, inset 0 1px 0 rgba(255,200,120,.12); }
+.btn--secondary:active:not(:disabled){ transform: translateY(2px); box-shadow: 0 1px 0 #241206; }
+
+/* Quest notices: parchment tacked to the board. */
+.notice { box-shadow: 0 3px 7px rgba(0,0,0,.4); transform: rotate(-.4deg); }
+.notice:nth-child(even) { transform: rotate(.5deg); }
+.notice::before {
+  content: ""; position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #d0d0d0, #6a6a6a);
+  box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+/* Sponsored notice — wax seal on the tag. */
+.notice--sponsored { box-shadow: 0 3px 7px rgba(0,0,0,.4), 0 0 10px rgba(240,192,64,.35); }
+.notice__seal::before {
+  content: "★"; display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; margin-right: 6px; border-radius: 50%; vertical-align: middle;
+  background: radial-gradient(circle at 35% 30%, #b83030, #7a1414); color: var(--col-gold);
+  font-size: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.5);
+}
+
+/* Town-crier creative framed like a billboard poster. */
+.merchant-stall__creative img,
+.merchant-stall__creative--fallback {
+  border: 4px solid var(--col-wood);
+  box-shadow: 0 0 0 2px #2a1808, 0 6px 10px rgba(0,0,0,.5);
+}
+
+/* Coin purse pouch + shimmering coin. */
+.purse { background: linear-gradient(#5c3317, #3a2010); box-shadow: inset 0 1px 0 rgba(255,200,120,.15), 0 2px 4px rgba(0,0,0,.4); }
+.purse__icon { filter: drop-shadow(0 0 4px rgba(240,192,64,.6)); animation: coin-shimmer 3.5s ease-in-out infinite; transform-origin: center; }
+@keyframes coin-shimmer { 0%,80%,100% { transform: rotate(0) scale(1); } 90% { transform: rotate(12deg) scale(1.1); } }
+
+/* Game tiles as little wooden plaques. */
+.game-table__tile {
+  background: linear-gradient(#5c3317, #3a2010);
+  box-shadow: 0 3px 0 rgba(0,0,0,.4), inset 0 1px 0 rgba(255,200,120,.12);
+  transition: transform .12s, filter .12s;
+}
+.game-table__tile:hover { background: linear-gradient(#6b4020, #432410); filter: brightness(1.12); transform: translateY(-2px); }
