@@ -207,16 +207,23 @@ body {
 .hotspot {
   position:      absolute;
   z-index:       var(--z-hotspot);
+  /* Responsive: two per row in the room's corners — never overflows / overlaps. */
+  width:         min(42%, 240px);
+  min-height:    74px;
+  display:       flex;
+  flex-direction: column;
+  align-items:   center;
+  justify-content: center;
+  gap:           6px;
   background:    linear-gradient(#3a2010, #24160a);
   border:        3px solid var(--col-wood);
   outline:       1px solid rgba(240,192,64,.35);
   outline-offset: -5px;
   color:         var(--col-gold);
   font-family:   var(--font-px);
-  font-size:     8px;
   cursor:        pointer;
-  padding:       8px 12px;
-  border-radius: 5px;
+  padding:       10px;
+  border-radius: 6px;
   transition:    transform .12s, box-shadow .12s, border-color .12s, filter .12s;
   text-shadow:   0 1px 2px #000;
   box-shadow:    0 5px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,200,120,.12);
@@ -229,16 +236,24 @@ body {
 }
 .hotspot:active { transform: translateY(1px); box-shadow: 0 3px 0 rgba(0,0,0,.45); }
 
-/* Zone positions (adjust to taste) */
-.hotspot--board    { top: 20%; left:  5%;  width: 200px; height: 130px; }
-.hotspot--barkeep  { top: 15%; left: 38%;  width: 200px; height: 120px; }
-.hotspot--merchant { top: 20%; right:  5%; width: 200px; height: 130px; }
-.hotspot--games    { bottom: 32%; left: 10%; width: 180px; height: 100px; }
+/* One zone per corner — clean, always fits, reads as "around the room". */
+.hotspot--board    { top: 14%;    left:  4%; }
+.hotspot--merchant { top: 14%;    right: 4%; }
+.hotspot--barkeep  { bottom: 12%; left:  4%; }
+.hotspot--games    { bottom: 12%; right: 4%; }
 
+.hotspot__icon  { font-size: clamp(24px, 8vw, 40px); line-height: 1; }
 .hotspot__label {
-  display:     block;
   text-align:  center;
-  line-height: 1.6;
+  line-height: 1.5;
+  font-size:   clamp(10px, 3vw, 13px);
+}
+
+/* Landscape / tall screens: a touch more breathing room top & bottom. */
+@media (min-aspect-ratio: 3/2) {
+  .hotspot { min-height: 64px; }
+  .hotspot--board, .hotspot--merchant { top: 16%; }
+  .hotspot--barkeep, .hotspot--games  { bottom: 14%; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

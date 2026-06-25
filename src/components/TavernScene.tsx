@@ -62,7 +62,8 @@ export function TavernScene({ signer, onActivity }: Props) {
         onClick={() => open("board")}
         aria-label="Quest Board"
       >
-        <span className="hotspot__label">📜 Quest Board</span>
+        <span className="hotspot__icon">📜</span>
+        <span className="hotspot__label">Quest Board</span>
       </button>
 
       {/* ── Hotspot: Barkeep ── */}
@@ -71,7 +72,8 @@ export function TavernScene({ signer, onActivity }: Props) {
         onClick={() => open("barkeep")}
         aria-label="Talk to Barkeep"
       >
-        <span className="hotspot__label">🍺 Barkeep</span>
+        <span className="hotspot__icon">🍺</span>
+        <span className="hotspot__label">Barkeep</span>
       </button>
 
       {/* ── Hotspot: Merchant Stall ── */}
@@ -80,7 +82,8 @@ export function TavernScene({ signer, onActivity }: Props) {
         onClick={() => open("merchant")}
         aria-label="Merchant Stall"
       >
-        <span className="hotspot__label">📯 Town Crier</span>
+        <span className="hotspot__icon">📯</span>
+        <span className="hotspot__label">Town Crier</span>
       </button>
 
       {/* ── Hotspot: Game Table ── */}
@@ -89,7 +92,8 @@ export function TavernScene({ signer, onActivity }: Props) {
         onClick={() => open("games")}
         aria-label="Game Table"
       >
-        <span className="hotspot__label">🎲 Game Table</span>
+        <span className="hotspot__icon">🎲</span>
+        <span className="hotspot__label">Game Table</span>
       </button>
 
       {/* ── Modal overlay ── */}
