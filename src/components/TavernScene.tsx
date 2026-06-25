@@ -33,14 +33,22 @@ export function TavernScene({ signer, onActivity }: Props) {
         ❓ What's all this?
       </button>
 
-      {/* ── Background layers ── */}
+      {/* ── Background layers (CSS pixel art) ── */}
       <div className="tavern-bg">
-        <div className="tavern-bg__floor" />
         <div className="tavern-bg__wall" />
+        <div className="tavern-bg__wainscot" />
+        <div className="tavern-bg__floor" />
         <div className="tavern-bg__beams" />
+        <div className="tavern-bg__sign"><span>⚔ The Rusty Flagon ⚔</span></div>
+        <div className="tavern-bg__shelf" />
+        <div className="tavern-bg__window" />
+        <div className="tavern-bg__counter" />
+        <div className="tavern-bg__barrel tavern-bg__barrel--l" />
+        <div className="tavern-bg__barrel tavern-bg__barrel--r" />
         <div className="tavern-bg__candle tavern-bg__candle--left"  />
         <div className="tavern-bg__candle tavern-bg__candle--right" />
         <div className="tavern-bg__fire" />
+        <div className="tavern-bg__glow" />
       </div>
 
       {/* ── Hotspot: Quest Board ── */}
