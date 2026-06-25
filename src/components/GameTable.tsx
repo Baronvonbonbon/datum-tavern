@@ -31,9 +31,10 @@ const GAMES = [
 
 interface Props {
   signer: Signer | null;
+  onActivity?: () => void; // bubbled up so the wallet bar refreshes after a wager
 }
 
-export function GameTable({ signer }: Props) {
+export function GameTable({ signer, onActivity }: Props) {
   const [selected, setSelected] = useState<GameType | null>(null);
   const [betting,  setBetting]  = useState(false);
   const { ads } = useDatumCampaigns();
@@ -110,6 +111,7 @@ export function GameTable({ signer }: Props) {
         <BettingModal
           gameType={selected}
           signer={signer}
+          onResolved={onActivity}
           onClose={() => setBetting(false)}
         />
       )}

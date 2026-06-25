@@ -12,14 +12,15 @@ import { WagerReveal } from "./WagerReveal";
 const GAS_HEADROOM_PAS = 1; // ~1 PAS reserved for the tx fee on top of the stake
 
 interface Props {
-  gameType: GameType;
-  signer:   Signer | null;
-  onClose:  () => void;
+  gameType:   GameType;
+  signer:     Signer | null;
+  onClose:    () => void;
+  onResolved?: () => void; // wallet balance changed (win/loss) — refresh the bar
 }
 
 type Mode = "vsHouse" | "p2p";
 
-export function BettingModal({ gameType, signer, onClose }: Props) {
+export function BettingModal({ gameType, signer, onClose, onResolved }: Props) {
   const [mode,    setMode]    = useState<Mode>("vsHouse");
   const [bet,     setBet]     = useState(1);
   const [pending, setPending] = useState(false);
@@ -65,6 +66,7 @@ export function BettingModal({ gameType, signer, onClose }: Props) {
       setError(e instanceof Error ? e.message : "Transaction failed");
     } finally {
       setPending(false);
+      onResolved?.(); // stake/winnings moved — refresh the wallet bar
     }
   };
 

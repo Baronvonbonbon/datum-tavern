@@ -1,6 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { BrowserProvider, Signer, formatEther } from "ethers";
-import { getBrowserProvider } from "../lib/pine";
+import { getBrowserProvider, getReadProvider } from "../lib/pine";
 import { PASEO_CHAIN_ID, PASEO_RPC_URL, PASEO_RPC_WSS, PASEO_EXPLORER } from "../lib/addresses";
 
 export interface WalletState {
@@ -15,6 +15,27 @@ export function useWallet() {
   const [state, setState] = useState<WalletState>({
     address: null, balance: null, signer: null, connecting: false, error: null,
   });
+  const addrRef = useRef<string | null>(null);
+  addrRef.current = state.address;
+
+  // Re-read the native PAS balance. Call after any action that moves funds
+  // (a bet win/loss, a gasless cash-out) so the wallet bar reflects it.
+  const refreshBalance = useCallback(async () => {
+    const a = addrRef.current;
+    if (!a) return;
+    try {
+      const p = await getReadProvider();
+      const bal = await p.getBalance(a);
+      setState((s) => ({ ...s, balance: formatEther(bal) }));
+    } catch { /* keep last */ }
+  }, []);
+
+  // Poll while connected so external changes (winnings, withdrawals) show up.
+  useEffect(() => {
+    if (!state.address) return;
+    const t = setInterval(refreshBalance, 10_000);
+    return () => clearInterval(t);
+  }, [state.address, refreshBalance]);
 
   const connect = useCallback(async () => {
     setState(s => ({ ...s, connecting: true, error: null }));
@@ -64,5 +85,5 @@ export function useWallet() {
     setState({ address: null, balance: null, signer: null, connecting: false, error: null });
   }, []);
 
-  return { ...state, connect, disconnect };
+  return { ...state, connect, disconnect, refreshBalance };
 }

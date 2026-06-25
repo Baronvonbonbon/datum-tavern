@@ -21,7 +21,11 @@ export interface EarningsState {
  * Tracks the user's accrued PaymentVault earnings and drives the claim/withdraw
  * actions. Refreshes the balance on connect and every 20s while connected.
  */
-export function useEarnings(signer: Signer | null, address: string | null): EarningsState {
+export function useEarnings(
+  signer: Signer | null,
+  address: string | null,
+  onWalletChange?: () => void, // refresh the native wallet balance after a cash-out
+): EarningsState {
   const [balanceWei, setBalanceWei] = useState<bigint>(0n);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -101,13 +105,14 @@ export function useEarnings(signer: Signer | null, address: string | null): Earn
           setBalanceWei(b);
           if (b === 0n) break;
         }
+        onWalletChange?.(); // earnings landed in the wallet — refresh its balance
       }
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "cash-out failed");
     } finally {
       setBusy(false);
     }
-  }, [signer, balanceWei]);
+  }, [signer, balanceWei, onWalletChange]);
 
   return { balanceWei, busy, status, refresh, claim, withdraw, cashOut };
 }

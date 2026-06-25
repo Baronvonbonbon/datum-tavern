@@ -16,9 +16,10 @@ type Zone = "board" | "barkeep" | "merchant" | "games" | null;
 
 interface Props {
   signer: Signer | null;
+  onActivity?: () => void; // refresh wallet balance after a fund-moving action (bet)
 }
 
-export function TavernScene({ signer }: Props) {
+export function TavernScene({ signer, onActivity }: Props) {
   const [activeZone, setActiveZone] = useState<Zone>(null);
 
   const open  = (z: Zone) => setActiveZone(z);
@@ -80,7 +81,7 @@ export function TavernScene({ signer }: Props) {
             {activeZone === "board"    && <QuestBoard    signer={signer} />}
             {activeZone === "barkeep"  && <Barkeep />}
             {activeZone === "merchant" && <MerchantStall />}
-            {activeZone === "games"    && <GameTable     signer={signer} />}
+            {activeZone === "games"    && <GameTable     signer={signer} onActivity={onActivity} />}
           </div>
         </div>
       )}
