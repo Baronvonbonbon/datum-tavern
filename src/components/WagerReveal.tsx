@@ -10,8 +10,8 @@
 import { useState, useEffect } from "react";
 import { formatEther } from "ethers";
 import { GameType } from "../lib/tavernBetting";
+import { DieFace } from "./sprites/DieFace";
 
-const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 const CARD_RANK: Record<number, string> = {
   2: "2", 3: "3", 4: "4", 5: "5", 6: "6", 7: "7", 8: "8", 9: "9", 10: "10",
   11: "J", 12: "Q", 13: "K", 14: "A",
@@ -43,9 +43,14 @@ function buildPair(t: Theme, p1Wins: boolean): { player: number; opp: number } {
 function Value({ t, v }: { t: Theme; v: number }) {
   if (t.kind === "dice") {
     const lo = Math.max(1, v - 6), d1 = pick(lo, Math.min(6, v - 1)), d2 = v - d1;
-    return <span className="wager-reveal__val">{DICE_FACES[d1 - 1]}{DICE_FACES[d2 - 1]}<small>{v}</small></span>;
+    return (
+      <span className="wager-reveal__val wager-reveal__dice">
+        <DieFace value={d1} size={30} /><DieFace value={d2} size={30} />
+        <small>{v}</small>
+      </span>
+    );
   }
-  if (t.kind === "card") return <span className="wager-reveal__val">{t.icon} {CARD_RANK[v]}</span>;
+  if (t.kind === "card") return <span className="wager-reveal__val wager-reveal__card">{CARD_RANK[v]}<small>{t.icon}</small></span>;
   return <span className="wager-reveal__val">{t.icon} {v}</span>;
 }
 

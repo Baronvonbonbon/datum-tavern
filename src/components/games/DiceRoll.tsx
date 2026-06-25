@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { GameType } from "../../lib/tavernBetting";
-
-const FACES = ["⚀","⚁","⚂","⚃","⚄","⚅"];
+import { DieFace } from "../sprites/DieFace";
 
 const FLAVOR: Record<number, string> = {
   1:  "Cursed roll. The tavern groans.",
@@ -39,10 +38,10 @@ export function DiceRoll({ }: Props) {
     <div className="game dice-roll">
       <div className="dice-roll__dice">
         <span className={`die ${rolling ? "die--rolling" : ""}`}>
-          {die1 !== null ? FACES[die1 - 1] : "🎲"}
+          <DieFace value={die1 ?? 1} size={56} />
         </span>
         <span className={`die ${rolling ? "die--rolling" : ""}`}>
-          {die2 !== null ? FACES[die2 - 1] : "🎲"}
+          <DieFace value={die2 ?? 1} size={56} />
         </span>
       </div>
 
