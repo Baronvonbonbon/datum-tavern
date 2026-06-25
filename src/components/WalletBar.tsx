@@ -17,6 +17,15 @@ export function WalletBar({ wallet, earnings, view, onToggleView }: Props) {
   return (
     <div className="wallet-bar">
       <span className="wallet-bar__brand">⚔ DATUM TAVERN</span>
+      <a
+        className="wallet-bar__datum"
+        href="https://datum.javcon.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Datum Protocol"
+      >
+        datum.javcon.io ↗
+      </a>
       <button className="btn btn--ghost wallet-bar__nav" onClick={onToggleView}>
         {view === "tavern" ? "⚙ Console" : "🍺 Tavern"}
       </button>

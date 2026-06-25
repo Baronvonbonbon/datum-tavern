@@ -809,3 +809,7 @@ body {
   width: 20px; height: 20px; border-radius: 3px; cursor: pointer; font-size: 11px;
 }
 .demo-banner__close:hover { background: rgba(0,0,0,.45); }
+
+/* ── Permanent Datum link in the footer bar ──────────────────────────────────── */
+.wallet-bar__datum { color: var(--col-gold); font-size: 8px; text-decoration: none; }
+.wallet-bar__datum:hover { color: var(--col-amber); text-decoration: underline; }
