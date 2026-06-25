@@ -356,26 +356,33 @@ body {
   margin:      16px 0;
 }
 
-/* CSS pixel-art barkeep sprite placeholder */
+/* Barkeep sprite — hosts the inline pixel-art SVG behind the bar. */
 .barkeep__sprite {
-  width:        48px;
-  height:       64px;
-  flex-shrink:  0;
-  background:   var(--col-wood);
-  border:       2px solid var(--col-amber);
-  position:     relative;
-  image-rendering: pixelated;
+  width: 96px; flex-shrink: 0;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding: 8px 6px 6px; border-radius: 6px;
+  background: linear-gradient(#6b4020, #4a2a12);
+  border: 3px solid #2a1808;
+  box-shadow: inset 0 2px 0 rgba(255,200,120,.15), 0 4px 8px rgba(0,0,0,.4);
 }
 
-/* Head */
-.barkeep__sprite::before {
-  content:  "";
-  position: absolute;
-  top: 4px; left: 10px;
-  width: 28px; height: 24px;
-  background: #c89060;
-  border-radius: 4px;
-}
+/* ── Hand-coded sprites (shared) ─────────────────────────────────────────────── */
+.sprite { display: block; image-rendering: pixelated; }
+.sprite--barkeep { width: 80px; height: auto; animation: sprite-bob 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.sprite--barkeep .sprite__mug { animation: barkeep-toast 4.5s ease-in-out infinite; transform-origin: 26px 24px; }
+.sprite--barkeep .sprite__eyes { animation: sprite-blink 5s step-end infinite; transform-origin: center; }
+
+@keyframes sprite-bob   { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+@keyframes barkeep-toast{ 0%,70%,100% { transform: rotate(0); } 82% { transform: rotate(-14deg) translateY(-2px); } }
+@keyframes sprite-blink { 0%,92%,100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+
+/* Patrons standing at the bar (background, behind hotspots). */
+.patron { position: absolute; z-index: 2; opacity: .92; filter: drop-shadow(0 3px 2px rgba(0,0,0,.5)); }
+.patron .sprite--patron { width: 46px; height: auto; }
+.patron--1 { bottom: 26%; left: 24%;  animation: patron-sway 4s ease-in-out infinite; }
+.patron--2 { bottom: 26%; left: 56%;  animation: patron-sway 5.2s ease-in-out infinite .6s; }
+.patron--3 { bottom: 26%; right: 26%; animation: patron-sway 4.6s ease-in-out infinite 1.1s; }
+@keyframes patron-sway { 0%,100% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } }
 
 .barkeep__bubble {
   flex:          1;

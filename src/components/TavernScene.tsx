@@ -12,6 +12,7 @@ import { Barkeep }       from "./Barkeep";
 import { MerchantStall } from "./MerchantStall";
 import { GameTable }     from "./GameTable";
 import { WhatsThis }     from "./WhatsThis";
+import { PatronSprite }  from "./sprites/PatronSprite";
 
 type Zone = "board" | "barkeep" | "merchant" | "games" | "about" | null;
 
@@ -48,6 +49,10 @@ export function TavernScene({ signer, onActivity }: Props) {
         <div className="tavern-bg__candle tavern-bg__candle--left"  />
         <div className="tavern-bg__candle tavern-bg__candle--right" />
         <div className="tavern-bg__fire" />
+        {/* Patrons nursing mugs at the bar (idle sway) */}
+        <div className="patron patron--1"><PatronSprite tone="red"  /></div>
+        <div className="patron patron--2"><PatronSprite tone="blue" /></div>
+        <div className="patron patron--3"><PatronSprite tone="brown" /></div>
         <div className="tavern-bg__glow" />
       </div>
 

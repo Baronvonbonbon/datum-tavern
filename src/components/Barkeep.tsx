@@ -15,6 +15,7 @@ import { useEarningsContext } from "../hooks/earningsContext";
 import { useTab } from "../hooks/tabContext";
 import { ACTION_TYPE } from "../lib/addresses";
 import { OnChainNote } from "./OnChainNote";
+import { BarkeepSprite } from "./sprites/BarkeepSprite";
 
 const BARKEEP_LINES = [
   "Storm's comin' from the north. Best stay another night.",
@@ -81,7 +82,7 @@ export function Barkeep() {
       <h2 className="modal__title">🍺 The Barkeep</h2>
 
       <div className="barkeep__npc">
-        <div className="barkeep__sprite" aria-label="Barkeep NPC" />
+        <div className="barkeep__sprite" aria-label="Barkeep NPC"><BarkeepSprite /></div>
         {line && (
           <div className={`barkeep__bubble ${isAd ? "barkeep__bubble--sponsored" : ""}`}>
             {isAd && <span className="barkeep__whisper-tag">📣 {adLabel}</span>}
