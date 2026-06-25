@@ -1,6 +1,9 @@
 /**
  * GameTable — floor hotspot.
- * Lets the user pick a game, play it solo (free RNG), or wager PAS on the result.
+ * Pick a game, then either play it solo for fun (free local RNG, no stakes) or
+ * wager PAS. A wager resolves on-chain (TavernBetting, a 50/50 RNG) and the
+ * outcome is revealed AS the game (see WagerReveal) — the dice/cards you see are
+ * the chain's actual result, not a separate animation.
  */
 
 import { useState } from "react";
@@ -72,11 +75,12 @@ export function GameTable({ signer }: Props) {
             // HighLow needs to know if it's high or low
             variant={selected === GameType.HIGH_CARD ? "high" : selected === GameType.LOW_CARD ? "low" : undefined}
           />
+          <p className="hint game-table__free-note">↑ Free practice (local RNG, no stakes).</p>
 
           <div className="game-table__wager">
             {signer ? (
               <button className="btn btn--primary" onClick={() => setBetting(true)}>
-                💰 Place a Wager
+                💰 Wager PAS (on-chain)
               </button>
             ) : (
               <span className="hint">Connect wallet to wager PAS</span>
@@ -111,10 +115,12 @@ export function GameTable({ signer }: Props) {
       )}
 
       <OnChainNote>
-        Two separate economies: <b>wagers</b> use your own PAS via
-        <code>TavernBetting</code> (independent of Datum). A <b>sponsored action</b>
-        settles a Datum action-claim — the relay's verifier attests it
-        (<code>/action-attest</code>), and your reward share lands in
+        Two separate economies. <b>Wagers</b> use your own PAS via
+        <code>TavernBetting</code> (independent of Datum): a 50/50 result from
+        <code>keccak256(blockhash…)</code>, resolved on-chain the moment you sign —
+        and the dice/cards revealed are derived from that exact outcome. A
+        <b> sponsored action</b> settles a Datum action-claim — the relay's
+        verifier attests it (<code>/action-attest</code>) and your reward lands in
         <code>PaymentVault</code>. Gameplay and ads stay cleanly separated.
       </OnChainNote>
     </div>

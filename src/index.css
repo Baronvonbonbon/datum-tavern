@@ -775,3 +775,20 @@ body {
 /* ── Barkeep gasless cash-out ────────────────────────────────────────────────── */
 .barkeep__cashout { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 10px; background: rgba(42,96,50,0.18); border: 1px dashed var(--col-green); border-radius: 4px; }
 .barkeep__cashout-line { color: var(--col-parchment); font-size: 9px; line-height: 1.5; }
+
+/* ── Wager reveal (on-chain outcome as the game) ─────────────────────────────── */
+.wager-reveal { text-align: center; padding: 12px; border-radius: 6px; border: 2px solid var(--col-border); }
+.wager-reveal.win  { border-color: var(--col-gold);  background: rgba(240,192,64,.10); }
+.wager-reveal.lose { border-color: var(--col-red);   background: rgba(139,32,32,.12); }
+.wager-reveal__contest { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 10px; }
+.wager-reveal__side { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 90px; }
+.wager-reveal__who { font-size: 8px; color: var(--col-text-dim); }
+.wager-reveal__val { font-size: 28px; line-height: 1; }
+.wager-reveal__val small { display: block; font-size: 9px; color: var(--col-text-dim); margin-top: 2px; }
+.wager-reveal__vs { font-family: var(--font-px); font-size: 9px; color: var(--col-amber); }
+.wager-reveal__spin { display: inline-block; animation: wager-spin .3s linear infinite; }
+@keyframes wager-spin { 0% { opacity: .5; transform: translateY(-2px); } 100% { opacity: 1; transform: translateY(2px); } }
+.wager-reveal__rolling { font-size: 9px; color: var(--col-amber); }
+.wager-reveal__verdict { font-family: var(--font-px); font-size: 12px; color: var(--col-gold); margin-bottom: 4px; }
+.wager-reveal__outcome p { font-size: 11px; margin-bottom: 4px; }
+.game-table__free-note { font-size: 8px; margin: 4px 0 8px; }

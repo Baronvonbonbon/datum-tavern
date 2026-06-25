@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { Signer, formatEther } from "ethers";
 import { betVsHouse, openP2PGame, getHouseBalanceRead, GameType, MAX_BET_PAS, GameResult } from "../lib/tavernBetting";
 import { getReadProvider } from "../lib/pine";
+import { WagerReveal } from "./WagerReveal";
 
 const GAS_HEADROOM_PAS = 1; // ~1 PAS reserved for the tx fee on top of the stake
 
@@ -121,15 +122,14 @@ export function BettingModal({ gameType, signer, onClose }: Props) {
       )}
 
       {result && (
-        <div className={`betting-modal__result ${result.p1Wins ? "win" : "lose"}`}>
-          <p className="betting-modal__outcome">
-            {result.p1Wins ? "🏆 YOU WIN!" : "💀 The house wins."}
-          </p>
-          {result.p1Wins && (
-            <p>Payout: {formatEther(result.payout)} PAS</p>
-          )}
-          <button className="btn btn--secondary" onClick={onClose}>Close</button>
-        </div>
+        <WagerReveal
+          gameType={gameType}
+          p1Wins={result.p1Wins}
+          payoutWei={result.payout}
+          betPas={bet}
+          vsHouse={mode === "vsHouse"}
+          onClose={onClose}
+        />
       )}
 
       {p2pId !== null && (
